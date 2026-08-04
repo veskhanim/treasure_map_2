@@ -1,0 +1,3381 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ATINY Treasure Map</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Montserrat:wght@700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        :root {
+            --bg-deep: #0a0a0a;
+            --sand: #e8985b;
+            --sand-light: #f4b87a;
+            --sand-dark: #c97a3a;
+            --orange: #ff6b00;
+            --white: #ffffff;
+            --black: #1a1a1a;
+            --text: #ffffff;
+            --text-dim: rgba(255, 255, 255, 0.7);
+            --text-muted: rgba(255, 255, 255, 0.4);
+            --border: rgba(255, 255, 255, 0.1);
+            --card-bg: rgba(26, 26, 26, 0.7);
+        }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(180deg, #87CEEB 0%, #e8985b 60%, #c97a3a 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            height: 100vh;
+            overflow: hidden;
+            position: relative;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background:
+                radial-gradient(ellipse 150px 80px at 15% 20%, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0.4) 40%, transparent 70%),
+                radial-gradient(ellipse 200px 100px at 45% 15%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 40%, transparent 70%),
+                radial-gradient(ellipse 180px 90px at 75% 25%, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.35) 40%, transparent 70%),
+                radial-gradient(ellipse 160px 85px at 85% 40%, rgba(255,255,255,0.7) 0%, rgba(255,255,255,0.3) 40%, transparent 70%),
+                radial-gradient(ellipse 140px 75px at 25% 35%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.25) 40%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .app-container {
+            position: relative;
+            z-index: 1;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .icon-sm { width: 12px; height: 12px; }
+        .icon-md { width: 18px; height: 18px; }
+        .header {
+            background: transparent;
+            padding: 12px 14px 10px;
+            flex-shrink: 0;
+        }
+        .header-top { margin-bottom: 10px; }
+        .title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 18px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--white);
+            text-transform: uppercase;
+            text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        .title span {
+            color: var(--orange);
+            text-shadow: 0 2px 8px rgba(255,107,0,0.5);
+        }
+        .search-container {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            position: relative;
+        }
+        .search-input-wrap {
+            position: relative;
+            flex: 1;
+        }
+        .search-input-wrap .icon {
+            position: absolute;
+            left: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: rgba(26, 26, 26, 0.5);
+            width: 14px;
+            height: 14px;
+        }
+        .search-input {
+            width: 100%;
+            padding: 7px 8px 7px 30px;
+            background: rgba(255,255,255,0.5);
+            border: 1px solid rgba(255,255,255,0.6);
+            border-radius: 6px;
+            color: var(--black);
+            font-size: 12px;
+            outline: none;
+        }
+        .search-input:focus {
+            border-color: var(--orange);
+            background: rgba(255,255,255,0.7);
+        }
+        .search-input::placeholder {
+            color: rgba(26, 26, 26, 0.5);
+        }
+        .calendar-btn {
+            padding: 7px 10px;
+            background: rgba(255,255,255,0.4);
+            border: 1px solid rgba(255,255,255,0.5);
+            border-radius: 6px;
+            color: var(--black);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .calendar-btn.active {
+            background: var(--orange);
+            border-color: var(--orange);
+        }
+        .calendar-btn .icon {
+            width: 14px;
+            height: 14px;
+        }
+        .calendar-dropdown {
+            position: absolute;
+            top: calc(100% + 6px);
+            left: 0; right: 0;
+            background: rgba(255,255,255,0.95);
+            border-radius: 8px;
+            padding: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 1000;
+            display: none;
+        }
+        .calendar-dropdown.visible { display: block; }
+        .calendar-mode-switch {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .calendar-mode-btn {
+            flex: 1;
+            padding: 6px;
+            background: rgba(0,0,0,0.1);
+            border: none;
+            border-radius: 4px;
+            color: var(--black);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .calendar-mode-btn.active {
+            background: var(--orange);
+            color: white;
+        }
+        .calendar-fields {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .calendar-input {
+            padding: 8px;
+            background: rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.2);
+            border-radius: 4px;
+            color: var(--black);
+            font-size: 12px;
+            outline: none;
+            color-scheme: light;
+        }
+        .date-range-fields {
+            display: none;
+            gap: 8px;
+        }
+        .date-range-fields.visible { display: flex; }
+        .date-range-fields .calendar-input { flex: 1; }
+        .calendar-clear {
+            margin-top: 8px;
+            padding: 6px;
+            background: rgba(255,107,0,0.2);
+            border: 1px solid var(--orange);
+            border-radius: 4px;
+            color: var(--black);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            width: 100%;
+        }
+        .calendar-clear.visible { display: block; }
+        .scrollable-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-bottom: 80px;
+        }
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .filters-scroll {
+            display: flex;
+            gap: 6px;
+            padding: 8px 12px;
+            overflow-x: auto;
+            scrollbar-width: none;
+            align-items: center;
+        }
+        .filters-scroll::-webkit-scrollbar { display: none; }
+        .filter-chip {
+            flex-shrink: 0;
+            padding: 8px 14px;
+            background: rgba(255,107,0,0.3);
+            border: 2px solid rgba(255,107,0,0.6);
+            border-radius: 16px;
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .filter-chip.active {
+            background: linear-gradient(135deg, var(--orange), var(--sand));
+            border-color: var(--orange);
+            color: var(--black);
+        }
+        .dropdown-wrap {
+            position: relative;
+            flex-shrink: 0;
+        }
+        .dropdown-trigger {
+            padding: 8px 14px;
+            background: rgba(255,107,0,0.3);
+            border: 2px solid rgba(255,107,0,0.6);
+            border-radius: 16px;
+            color: var(--white);
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .dropdown-trigger .arrow {
+            width: 12px;
+            height: 12px;
+            transition: transform 0.2s;
+        }
+        .dropdown-wrap.open .dropdown-trigger .arrow {
+            transform: rotate(180deg);
+        }
+        .dropdown-menu {
+            position: fixed;
+            min-width: 180px;
+            max-width: calc(100vw - 24px);
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            background: rgba(26, 26, 26, 0.98);
+            border: 2px solid rgba(255,107,0,0.5);
+            border-radius: 12px;
+            padding: 8px;
+            z-index: 9999;
+            display: none;
+        }
+        .dropdown-menu.visible { display: block; }
+        .dropdown-menu::-webkit-scrollbar { width: 4px; }
+        .dropdown-menu::-webkit-scrollbar-thumb {
+            background: rgba(255,107,0,0.5);
+            border-radius: 2px;
+        }
+        .dropdown-menu-item {
+            padding: 10px 14px;
+            border-radius: 8px;
+            color: var(--text-dim);
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 4px;
+        }
+        .dropdown-menu-item:active {
+            background: rgba(255,107,0,0.2);
+            color: var(--white);
+        }
+        .dropdown-menu-item.active {
+            background: rgba(255,107,0,0.3);
+            color: var(--orange);
+            font-weight: 700;
+        }
+        .dropdown-menu-item .check-icon {
+            width: 16px;
+            height: 16px;
+            opacity: 0;
+        }
+        .dropdown-menu-item.active .check-icon { opacity: 1; }
+        .sort-bar {
+            padding: 8px 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .results-text {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .sort-btn {
+            font-size: 11px;
+            color: var(--text-dim);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .video-list {
+            padding: 0 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        .video-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            gap: 10px;
+        }
+        .video-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .video-thumbnail {
+            position: relative;
+            width: 140px;
+            min-width: 140px;
+            height: 78px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid rgba(255,107,0,0.3);
+        }
+        .video-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .video-duration {
+            position: absolute;
+            bottom: 3px;
+            right: 3px;
+            background: rgba(0,0,0,0.9);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--sand-light);
+        }
+        .category-badge {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            background: rgba(255,107,0,0.85);
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-size: 8px;
+            font-weight: 800;
+            color: var(--black);
+        }
+        .thumbnail-controls {
+            display: flex;
+            gap: 4px;
+            width: 140px;
+        }
+        .edit-btn, .move-btn, .remove-btn {
+            flex: 1;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .edit-btn:active {
+            background: rgba(255,107,0,0.2);
+            border-color: var(--orange);
+        }
+        .edit-btn .icon {
+            width: 14px;
+            height: 14px;
+            color: var(--text-dim);
+        }
+        .video-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-width: 0;
+        }
+        .video-title {
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.3;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 4px;
+        }
+        .video-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            flex-wrap: wrap;
+        }
+        .meta-dot {
+            width: 2px;
+            height: 2px;
+            background: var(--orange);
+            border-radius: 50%;
+        }
+        .member-tag {
+            padding: 2px 6px;
+            background: rgba(255,107,0,0.2);
+            border: 1px solid rgba(255,107,0,0.4);
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--sand-light);
+        }
+        .member-tag.all-members {
+            background: rgba(255,107,0,0.3);
+            border-color: var(--orange);
+            color: var(--orange);
+        }
+        .video-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .video-link {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            transition: all 0.2s;
+            min-width: 42px;
+            justify-content: center;
+        }
+        .video-link.kr {
+            background: rgba(255, 107, 0, 0.2);
+            border: 1px solid rgba(255, 107, 0, 0.3);
+            color: #ff6b00;
+        }
+        .video-link.en {
+            background: rgba(66, 133, 244, 0.2);
+            border: 1px solid rgba(66, 133, 244, 0.3);
+            color: #4285f4;
+        }
+        .video-link.ru {
+            background: rgba(234, 67, 53, 0.2);
+            border: 1px solid rgba(234, 67, 53, 0.3);
+            color: #ea4335;
+        }
+        .video-link.disabled {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.3);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .video-link:hover:not(.disabled) {
+            transform: translateY(-1px);
+            filter: brightness(1.2);
+        }
+        .video-link:active:not(.disabled) {
+            transform: translateY(0);
+        }
+        .watched-progress {
+            margin-left: auto;
+            width: 70px;
+            cursor: pointer;
+        }
+        .progress-bar {
+            position: relative;
+            width: 100%;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .progress-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: var(--orange);
+            transition: width 0.3s ease;
+            border-radius: 6px;
+        }
+        .progress-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            z-index: 1;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+        .playlists-container { padding: 12px; }
+        .add-playlist-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, var(--orange), var(--sand));
+            border: none;
+            border-radius: 10px;
+            color: var(--black);
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .playlist-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+        .playlist-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        .playlist-name {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        .playlist-count {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .playlist-delete-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .playlist-preview {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+        }
+        .playlist-preview-thumb {
+            width: 80px;
+            height: 45px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255,107,0,0.3);
+        }
+        .playlist-preview-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .playlist-detail {
+            padding: 0 12px 12px;
+            animation: fadeIn 0.3s ease;
+        }
+        .playlist-detail-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 2px solid rgba(255,107,0,0.3);
+            margin-bottom: 12px;
+        }
+        .back-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255,107,0,0.2);
+            border: 2px solid rgba(255,107,0,0.5);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .back-btn:active {
+            background: rgba(255,107,0,0.4);
+        }
+        .back-btn .icon {
+            width: 18px;
+            height: 18px;
+            color: var(--orange);
+        }
+        .playlist-detail-title {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        .playlist-detail-count {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        .playlist-detail-actions {
+            display: flex;
+            gap: 6px;
+        }
+        .playlist-detail-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .playlist-detail-btn.add {
+            background: rgba(76,175,80,0.2);
+            border: 1px solid rgba(76,175,80,0.5);
+        }
+        .playlist-detail-btn.add .icon { color: #4CAF50; }
+        .playlist-detail-btn.delete {
+            background: rgba(234,67,53,0.2);
+            border: 1px solid rgba(234,67,53,0.5);
+        }
+        .playlist-detail-btn.delete .icon { color: #ea4335; }
+        .playlist-detail-btn:active { transform: scale(0.95); }
+        .team-filters {
+            padding: 10px 12px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid rgba(255,107,0,0.3);
+            display: flex;
+            gap: 8px;
+        }
+        .card-switcher-row {
+            flex: 1;
+            min-width: 0;
+        }
+        .card-switcher-label {
+            font-size: 9px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .card-switcher {
+            display: flex;
+            gap: 3px;
+            background: rgba(255,255,255,0.08);
+            border-radius: 8px;
+            padding: 2px;
+        }
+        .switch-card {
+            flex: 1;
+            padding: 6px 4px;
+            background: transparent;
+            border: 2px solid transparent;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            min-width: 0;
+        }
+        .switch-card:hover { background: rgba(255,107,0,0.1); }
+        .switch-card.active {
+            background: rgba(255,107,0,0.2);
+            border-color: var(--orange);
+            box-shadow: 0 2px 8px rgba(255,107,0,0.3);
+        }
+        .switch-card-icon {
+            font-size: 14px;
+            margin-bottom: 2px;
+            line-height: 1;
+        }
+        .switch-card-label {
+            font-size: 9px;
+            font-weight: 700;
+            color: var(--text-dim);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .switch-card.active .switch-card-label { color: var(--orange); }
+        .channels-list {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .channel-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .channel-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .channel-icon.original {
+            background: linear-gradient(135deg, var(--orange), var(--sand));
+            color: var(--black);
+        }
+        .channel-icon.translation {
+            background: linear-gradient(135deg, #64b4ff, #4a90e2);
+            color: var(--white);
+        }
+        .channel-details {
+            flex: 1;
+            min-width: 0;
+        }
+        .channel-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .channel-meta {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .channel-badges {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .badge {
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+        }
+        .badge-tracked {
+            background: rgba(76, 175, 80, 0.2);
+            border: 1px solid rgba(76, 175, 80, 0.5);
+            color: #4CAF50;
+        }
+        .badge-untracked {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-muted);
+        }
+        .badge-original {
+            background: rgba(255,107,0,0.2);
+            border: 1px solid rgba(255,107,0,0.5);
+            color: var(--orange);
+        }
+        .badge-translation {
+            background: rgba(100,180,255,0.2);
+            border: 1px solid rgba(100,180,255,0.5);
+            color: #64b4ff;
+        }
+        .channel-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .channel-action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .channel-action-btn:active {
+            background: rgba(255,107,0,0.2);
+            border-color: var(--orange);
+        }
+        .channel-action-btn .icon {
+            width: 14px;
+            height: 14px;
+            color: var(--text-dim);
+        }
+        .channel-action-btn.tracked-btn.active {
+            background: rgba(76, 175, 80, 0.2);
+            border-color: #4CAF50;
+        }
+        .channel-action-btn.tracked-btn.active .icon { color: #4CAF50; }
+        .new-videos-header {
+            padding: 12px;
+            background: rgba(255,107,0,0.1);
+            border-bottom: 2px solid rgba(255,107,0,0.3);
+        }
+        .new-videos-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--white);
+            margin-bottom: 4px;
+        }
+        .new-videos-subtitle {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+        .new-video-card {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 10px;
+            padding: 8px;
+            margin: 0 0 8px 0;
+            display: flex;
+            gap: 10px;
+        }
+        .new-video-card .video-thumbnail {
+            width: 140px;
+            min-width: 140px;
+            height: 78px;
+        }
+        .new-video-card .thumbnail-controls { width: 140px; }
+        .new-video-card .pending-video-title {
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.3;
+            color: var(--white);
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .new-video-card .pending-video-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-dim);
+            flex-wrap: wrap;
+        }
+        .new-video-card .meta-dot {
+            width: 3px;
+            height: 3px;
+            background: var(--orange);
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .new-video-card .edit-btn,
+        .new-video-card .remove-btn {
+            flex: 1;
+            height: 28px;
+            border-radius: 6px;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .new-video-card .edit-btn {
+            background: rgba(255, 107, 0, 0.2);
+            border: 1px solid rgba(255, 107, 0, 0.3);
+        }
+        .new-video-card .edit-btn:active {
+            background: rgba(255, 107, 0, 0.4);
+            border-color: var(--orange);
+        }
+        .new-video-card .edit-btn .icon {
+            width: 14px;
+            height: 14px;
+            color: var(--orange);
+        }
+        .new-video-card .remove-btn {
+            background: rgba(234, 67, 53, 0.1);
+            border: 1px solid rgba(234, 67, 53, 0.3);
+        }
+        .new-video-card .remove-btn:active {
+            background: rgba(234, 67, 53, 0.3);
+            border-color: #ea4335;
+        }
+        .new-video-card .remove-btn .icon {
+            width: 14px;
+            height: 14px;
+            color: #ea4335;
+        }
+        .new-video-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+        }
+        .btn-add {
+            flex: 1;
+            padding: 8px;
+            background: linear-gradient(135deg, var(--orange), var(--sand));
+            border: none;
+            border-radius: 6px;
+            color: var(--black);
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+        .btn-skip {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: var(--text-dim);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .empty-new-videos {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-new-videos-text { font-size: 14px; margin-bottom: 8px; }
+        .empty-new-videos-sub { font-size: 12px; }
+        .translations-list {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .trans-group {
+            background: var(--card-bg);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 12px;
+        }
+        .trans-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid rgba(255,107,0,0.3);
+        }
+        .trans-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--orange), var(--sand));
+            color: var(--black);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 16px;
+        }
+        .trans-item {
+            display: flex;
+            gap: 10px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .trans-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        .trans-item:first-of-type { padding-top: 0; }
+        .trans-thumb {
+            width: 80px;
+            height: 45px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 1px solid rgba(255,107,0,0.3);
+        }
+        .trans-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .trans-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .trans-title {
+            font-size: 12px;
+            font-weight: 600;
+            line-height: 1.3;
+            margin-bottom: 4px;
+        }
+        .trans-meta {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--text-muted);
+            display: none;
+        }
+        .empty-state.visible { display: block; }
+        .empty-state-text {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--orange);
+            letter-spacing: 1px;
+        }
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            z-index: 100;
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            padding-bottom: 8px;
+        }
+        .dune {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%;
+        }
+        .dune-1 {
+            height: 70px;
+            background: linear-gradient(180deg, var(--sand) 0%, var(--sand-dark) 100%);
+            clip-path: polygon(0% 60%, 10% 50%, 20% 55%, 30% 45%, 40% 50%, 50% 40%, 60% 48%, 70% 38%, 80% 45%, 90% 35%, 100% 42%, 100% 100%, 0% 100%);
+        }
+        .dune-2 {
+            height: 60px;
+            background: linear-gradient(180deg, var(--sand-light) 0%, var(--sand) 100%);
+            clip-path: polygon(0% 70%, 15% 60%, 30% 68%, 45% 58%, 60% 65%, 75% 55%, 90% 62%, 100% 52%, 100% 100%, 0% 100%);
+            opacity: 0.9;
+        }
+        .dune-3 {
+            height: 50px;
+            background: linear-gradient(180deg, #f4c89a 0%, var(--sand-light) 100%);
+            clip-path: polygon(0% 75%, 20% 68%, 40% 73%, 60% 66%, 80% 71%, 100% 64%, 100% 100%, 0% 100%);
+            opacity: 0.85;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            cursor: pointer;
+            flex: 1;
+            padding: 8px 6px 10px;
+            z-index: 10;
+        }
+        .nav-icon-wrap {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+            background: transparent;
+            border: 2px solid rgba(255,107,0,0.4);
+        }
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            color: var(--black);
+        }
+        .nav-label {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--white);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+        }
+        .nav-item.active .nav-icon-wrap {
+            background: linear-gradient(135deg, var(--orange), var(--sand));
+            border-color: var(--orange);
+            box-shadow: 0 0 12px rgba(255,107,0,0.5), 0 4px 8px rgba(0,0,0,0.4);
+        }
+        .nav-item.active .nav-icon { color: #000000 !important; }
+        .nav-item.active .nav-label {
+            color: var(--white);
+            text-shadow: 0 0 10px rgba(255,107,0,0.8), 0 1px 3px rgba(0,0,0,0.8);
+        }
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .modal-overlay.visible { display: flex; }
+        .lang-option { transition: all 0.2s; }
+        .lang-option.active {
+            background: rgba(255,107,0,0.3) !important;
+            border-color: var(--orange) !important;
+            color: var(--orange) !important;
+        }
+        .lang-option:active { transform: scale(0.95); }
+        .member-select-btn { transition: all 0.2s; }
+        .member-select-btn.active {
+            background: rgba(255,107,0,0.3) !important;
+            border-color: var(--orange) !important;
+            color: var(--orange) !important;
+        }
+        .member-select-btn:active { transform: scale(0.95); }
+        .modal-input option {
+            background: #1a1a1a;
+            color: white;
+        }
+        .modal-content {
+            background: var(--card-bg);
+            border: 2px solid rgba(255,107,0,0.5);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            max-height: 85vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--white);
+        }
+        .modal-close {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-close .icon {
+            width: 18px;
+            height: 18px;
+            color: var(--text-dim);
+        }
+        .modal-field { margin-bottom: 14px; }
+        .modal-label {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-dim);
+            margin-bottom: 6px;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 8px;
+            color: var(--white);
+            font-size: 14px;
+            outline: none;
+        }
+        .modal-input:focus { border-color: var(--orange); }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        .modal-btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+        }
+        .modal-btn.save {
+            background: linear-gradient(135deg, var(--orange), var(--sand));
+            color: var(--black);
+        }
+        .modal-btn.cancel {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-dim);
+        }
+        .playlist-detail-btn.sort {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .playlist-detail-btn.sort.active {
+            background: rgba(255,107,0,0.2);
+            border-color: var(--orange);
+        }
+        .playlist-detail-btn.sort.active .icon { color: var(--orange); }
+        .playlist-detail-btn.sort .icon {
+            width: 16px;
+            height: 16px;
+            color: var(--text-dim);
+        }
+        .modal-member-tag {
+            padding: 6px 12px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: var(--white);
+            font-size: 11px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-member-tag.active {
+            background: rgba(255,107,0,0.3);
+            border-color: var(--orange);
+            color: var(--orange);
+        }
+        .modal-member-tag:active { transform: scale(0.95); }
+        .load-more-btn { transition: all 0.2s; }
+        .load-more-btn:active {
+            transform: scale(0.95);
+            opacity: 0.8;
+        }
+        .load-more-btn:hover { filter: brightness(1.1); }
+        .modal-btn.delete { transition: all 0.2s; }
+        .modal-btn.delete:hover {
+            background: rgba(234, 67, 53, 0.3) !important;
+            border-color: #ea4335 !important;
+        }
+        .modal-btn.delete:active { transform: scale(0.95); }
+        /* Календарь */
+       /* Календарь */
+        .calendar-filters {
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-select {
+            flex: 1;
+            min-width: 100px;
+            padding: 6px 8px;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            color: var(--white);
+            font-size: 12px;
+            outline: none;
+        }
+        .calendar-selector {
+            display: flex;
+            gap: 6px;
+            padding: 8px;
+        }
+        .calendar-selector select {
+            flex: 1;
+            padding: 8px;
+            background: rgba(255,107,0,0.2);
+            border: 1px solid rgba(255,107,0,0.4);
+            border-radius: 6px;
+            color: var(--white);
+            font-size: 13px;
+            font-weight: 600;
+            outline: none;
+        }
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            padding: 4px 8px;
+        }
+        .calendar-day-header {
+            text-align: center;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--text-dim);
+            padding: 4px 0;
+        }
+        .calendar-day-header.weekend {
+            color: var(--orange);
+        }
+        .calendar-day {
+            background: rgba(255,255,255,0.05);
+            border-radius: 4px;
+            padding: 2px;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.2s;
+            min-height: 70px;
+            display: flex;
+            flex-direction: column;
+        }
+        .calendar-day:hover { background: rgba(255,255,255,0.1); }
+        .calendar-day.active {
+            background: rgba(255,107,0,0.3);
+            border: 1px solid var(--orange);
+        }
+        .calendar-day.today {
+            border: 1px solid var(--sand);
+            background: rgba(232,152,91,0.2);
+        }
+        .calendar-day.has-events {
+            background: rgba(255,107,0,0.25);
+        }
+        .calendar-day.anniversary {
+            background: rgba(255,215,0,0.3);
+            border: 1px solid gold;
+        }
+        .calendar-day.atiny-day {
+            background: rgba(138,43,226,0.3);
+            border: 1px solid #8a2be2;
+        }
+        .calendar-day-number {
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--white);
+            line-height: 1;
+            flex-shrink: 0;
+        }
+        .calendar-day-count {
+            font-size: 8px;
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+        .calendar-day-previews {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1px;
+            margin-top: 2px;
+            flex: 1;
+            align-content: flex-start;
+        }
+        .calendar-day-preview-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 2px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .calendar-day-preview-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .calendar-day-event-icon {
+            font-size: 8px;
+            position: absolute;
+            top: 2px;
+            right: 2px;
+        }
+        .calendar-day-modal {
+            max-width: 90vw;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .day-modal-content { padding: 12px 0; }
+        .day-event {
+            background: rgba(255,255,255,0.05);
+            border-radius: 6px;
+            padding: 10px;
+            margin-bottom: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .day-event:hover { background: rgba(255,255,255,0.1); }
+        .day-event-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--white);
+            margin-bottom: 3px;
+        }
+        .day-event-meta {
+            font-size: 11px;
+            color: var(--text-dim);
+        }
+        @media (max-width: 360px) {
+            .video-thumbnail { width: 120px; min-width: 120px; height: 68px; }
+            .video-title { font-size: 11px; }
+            .title { font-size: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
+            <symbol id="i-calendar" viewBox="0 0 24 24">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/>
+                <line x1="16" y1="2" x2="16" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="8" y1="2" x2="8" y2="6" stroke="currentColor" stroke-width="2"/>
+                <line x1="3" y1="10" x2="21" y2="10" stroke="currentColor" stroke-width="2"/>
+            </symbol>
+            <symbol id="i-chevron-left" viewBox="0 0 24 24">
+                <polyline points="15 18 9 12 15 6" fill="none" stroke="currentColor" stroke-width="2"/>
+            </symbol>
+            <symbol id="i-chevron-right" viewBox="0 0 24 24">
+                <polyline points="9 18 15 12 9 6" fill="none" stroke="currentColor" stroke-width="2"/>
+            </symbol>
+            <symbol id="i-search" viewBox="0 0 24 24">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="M21 21l-4.3-4.3"/>
+            </symbol>
+            <symbol id="i-x" viewBox="0 0 24 24">
+                <path d="M6 6l12 12M18 6L6 18"/>
+            </symbol>
+            <symbol id="i-filter" viewBox="0 0 24 24">
+                <path d="M3 5h18M6 12h12M10 19h4"/>
+            </symbol>
+            <symbol id="i-user" viewBox="0 0 24 24">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>
+            </symbol>
+            <symbol id="i-check" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"/>
+            </symbol>
+            <symbol id="i-sort" viewBox="0 0 24 24">
+                <path d="M7 4v16M7 20l-3-3M7 20l3-3M17 20V4M17 4l-3 3M17 4l3 3"/>
+            </symbol>
+            <symbol id="i-map" viewBox="0 0 24 24">
+                <path d="M3 6l6-3 6 3 6-3v15l-6 3-6-3-6 3z"/>
+                <path d="M9 3v15M15 6v15"/>
+            </symbol>
+            <symbol id="i-users" viewBox="0 0 24 24">
+                <circle cx="9" cy="8" r="3.5"/>
+                <path d="M2 20c0-3.5 3-6 7-6s7 2.5 7 6"/>
+                <circle cx="17" cy="7" r="2.5"/>
+                <path d="M22 18c0-2.5-2-4.5-5-4.5"/>
+            </symbol>
+            <symbol id="i-link" viewBox="0 0 24 24">
+                <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+                <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </symbol>
+            <symbol id="i-plus" viewBox="0 0 24 24">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+            </symbol>
+            <symbol id="i-refresh" viewBox="0 0 24 24">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </symbol>
+            <symbol id="i-edit" viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </symbol>
+            <symbol id="i-back" viewBox="0 0 24 24">
+                <polyline points="15 18 9 12 15 6"/>
+            </symbol>
+            <symbol id="i-up" viewBox="0 0 24 24">
+                <polyline points="18 15 12 9 6 15"/>
+            </symbol>
+            <symbol id="i-down" viewBox="0 0 24 24">
+                <polyline points="6 9 12 15 18 9"/>
+            </symbol>
+            <symbol id="i-trash" viewBox="0 0 24 24">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            </symbol>
+            <symbol id="i-compass" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.5"/>
+                <path d="M12 8 L13.5 11 L16 12 L13.5 13 L12 16 L10.5 13 L8 12 L10.5 11 Z" fill="currentColor"/>
+            </symbol>
+            <symbol id="i-anchor" viewBox="0 0 24 24" fill="#1a1a1a">
+                <circle cx="12" cy="4" r="2.5"/>
+                <rect x="11" y="6" width="2" height="14" rx="1"/>
+                <rect x="6" y="8" width="12" height="2" rx="1"/>
+                <circle cx="6" cy="9" r="1.5"/>
+                <circle cx="18" cy="9" r="1.5"/>
+                <path d="M4 15 C4 19, 7 21, 12 21 C17 21, 20 19, 20 15" fill="none" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round"/>
+                <path d="M3 14 L5 16" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+                <path d="M21 14 L19 16" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+            </symbol>
+            <symbol id="i-eye" viewBox="0 0 24 24">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+            </symbol>
+            <symbol id="i-eye-off" viewBox="0 0 24 24">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+            </symbol>
+        </svg>
+
+        <header class="header">
+            <div class="header-top">
+                <div class="title">TREASURE <span>MAP</span></div>
+            </div>
+            <div class="search-container" id="searchContainer">
+                <div class="search-input-wrap">
+                    <svg class="icon"><use href="#i-search"/></svg>
+                    <input type="text" class="search-input" id="searchText" placeholder="Найти сокровище...">
+                </div>
+                <button class="calendar-btn" id="calendarBtn">
+                    <svg class="icon"><use href="#i-calendar"/></svg>
+                </button>
+                <div class="calendar-dropdown" id="calendarDropdown">
+                    <div class="calendar-mode-switch">
+                        <button class="calendar-mode-btn active" data-mode="single">Дата</button>
+                        <button class="calendar-mode-btn" data-mode="range">Период</button>
+                    </div>
+                    <div class="calendar-fields">
+                        <input type="date" class="calendar-input" id="searchDate">
+                        <div class="date-range-fields" id="dateRangeFields">
+                            <input type="date" class="calendar-input" id="dateFrom">
+                            <input type="date" class="calendar-input" id="dateTo">
+                        </div>
+                    </div>
+                    <button class="calendar-clear" id="calendarClear">Сбросить</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="scrollable-content">
+            <!-- Вкладка Карта -->
+            <div class="tab-content active" id="tab-map">
+                <div class="filters-scroll">
+                    <button class="filter-chip active" data-filter="all">
+                        <svg class="icon icon-sm"><use href="#i-filter"/></svg>
+                        Все
+                    </button>
+                    <div class="dropdown-wrap" id="categoryDropdown">
+                        <button class="dropdown-trigger" id="categoryTrigger">
+                            <svg class="icon icon-sm"><use href="#i-filter"/></svg>
+                            <span id="categoryLabel">Категория</span>
+                            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="categoryMenu">
+                            <div class="dropdown-menu-item" data-category="all">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Все
+                            </div>
+                            <div class="dropdown-menu-item" data-category="MV">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                MV
+                            </div>
+                            <div class="dropdown-menu-item" data-category="Awards">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Awards
+                            </div>
+                            <div class="dropdown-menu-item" data-category="Interview">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Interview
+                            </div>
+                            <div class="dropdown-menu-item" data-category="unwatched">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Не просмотрено
+                            </div>
+                            <div class="dropdown-menu-item" data-category="translated">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                С переводом
+                            </div>
+                        </div>
+                    </div>
+                    <div class="dropdown-wrap" id="memberDropdown">
+                        <button class="dropdown-trigger" id="memberTrigger">
+                            <svg class="icon icon-sm"><use href="#i-user"/></svg>
+                            <span id="memberLabel">от8</span>
+                            <svg class="arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                <polyline points="6 9 12 15 18 9"/>
+                            </svg>
+                        </button>
+                        <div class="dropdown-menu" id="memberMenu">
+                            <div class="dropdown-menu-item" data-member="all">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                от8
+                            </div>
+                            <div class="dropdown-menu-item" data-member="Hongjoong">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Hongjoong
+                            </div>
+                            <div class="dropdown-menu-item" data-member="Seonghwa">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Seonghwa
+                            </div>
+                            <div class="dropdown-menu-item" data-member="Yunho">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Yunho
+                            </div>
+                            <div class="dropdown-menu-item" data-member="Yeosang">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Yeosang
+                            </div>
+                            <div class="dropdown-menu-item" data-member="San">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                San
+                            </div>
+                            <div class="dropdown-menu-item" data-member="Mingi">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Mingi
+                            </div>
+                            <div class="dropdown-menu-item" data-member="Wooyoung">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Wooyoung
+                            </div>
+                            <div class="dropdown-menu-item" data-member="Jongho">
+                                <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                    <polyline points="20 6 9 17 4 12"/>
+                                </svg>
+                                Jongho
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="sort-bar">
+                    <span class="results-text" id="resultsCount">Найдено: 0</span>
+                    <button class="sort-btn" onclick="toggleSort()">
+                        <svg class="icon icon-sm"><use href="#i-sort"/></svg>
+                        <span id="sortLabel">Сначала новые</span>
+                    </button>
+                </div>
+                <div class="video-list" id="videoList"></div>
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-state-text">СОКРОВИЩА НЕ НАЙДЕНЫ</div>
+                </div>
+            </div>
+
+            <!-- Вкладка Новые видео -->
+            <div class="tab-content" id="tab-new-videos">
+                <div class="new-videos-header">
+                    <div class="new-videos-title">Новые видео с каналов</div>
+                    <div class="new-videos-subtitle">Обновляется раз в сутки</div>
+                </div>
+                <div class="sort-bar">
+                    <span class="results-text" id="pendingResultsCount">Найдено: 0</span>
+                    <button class="sort-btn" onclick="togglePendingSort()">
+                        <svg class="icon icon-sm"><use href="#i-sort"/></svg>
+                        <span id="pendingSortLabel">Сначала новые</span>
+                    </button>
+                </div>
+                <div id="newVideosList"></div>
+                <div class="load-more-container" id="loadMoreContainer" style="text-align:center;padding:20px;display:none;">
+                    <button class="load-more-btn" onclick="loadMorePendingVideos()" style="padding:12px 24px;background:linear-gradient(135deg,var(--orange),var(--sand));border:none;border-radius:8px;color:var(--black);font-size:14px;font-weight:700;cursor:pointer;">
+                        Показать ещё (осталось: <span id="remainingCount">0</span>)
+                    </button>
+                </div>
+                <div class="empty-new-videos" id="emptyNewVideos" style="display:none;">
+                    <div class="empty-new-videos-text">✨ Нет новых видео</div>
+                    <div class="empty-new-videos-sub">Нажмите "Обновить видео" для поиска</div>
+                </div>
+            </div>
+
+            <!-- Вкладка Плейлисты -->
+            <div class="tab-content" id="tab-playlists">
+                <div id="playlistsContainer">
+                    <div class="playlists-container">
+                        <button class="add-playlist-btn" onclick="openAddPlaylistModal()">
+                            <svg class="icon"><use href="#i-plus"/></svg>
+                            Создать плейлист
+                        </button>
+                        <div id="playlistsList"></div>
+                    </div>
+                </div>
+                <div class="playlist-detail" id="playlistDetail" style="display:none">
+                    <div class="playlist-detail-header">
+                        <button class="back-btn" onclick="closePlaylistDetail()">
+                            <svg class="icon"><use href="#i-back"/></svg>
+                        </button>
+                        <div style="flex:1;min-width:0;">
+                            <div class="playlist-detail-title" id="playlistDetailTitle"></div>
+                            <div class="playlist-detail-count" id="playlistDetailCount"></div>
+                        </div>
+                        <div class="playlist-detail-actions">
+                            <button class="playlist-detail-btn sort" onclick="togglePlaylistSort()" title="Сортировка">
+                                <svg class="icon"><use href="#i-sort"/></svg>
+                            </button>
+                            <button class="playlist-detail-btn add" onclick="openAddToPlaylistModal(currentPlaylistIdForAdd)" title="Добавить видео">
+                                <svg class="icon"><use href="#i-plus"/></svg>
+                            </button>
+                            <button class="playlist-detail-btn delete" onclick="deletePlaylist(currentPlaylistIdForAdd)" title="Удалить плейлист">
+                                <svg class="icon"><use href="#i-trash"/></svg>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="video-list" id="playlistVideosList"></div>
+                    <div class="empty-state" id="playlistEmptyState">
+                        <div class="empty-state-text">ПЛЕЙЛИСТ ПУСТ</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Вкладка Команда -->
+            <div class="tab-content" id="tab-translations">
+                <div class="team-filters">
+                    <div class="card-switcher-row">
+                        <div class="card-switcher-label">Тип</div>
+                        <div class="card-switcher" id="typeSwitcher">
+                            <div class="switch-card active" data-type="all" onclick="setTeamFilter('type', 'all', this)">
+                                <div class="switch-card-icon"></div>
+                                <div class="switch-card-label">Все</div>
+                            </div>
+                            <div class="switch-card" data-type="original" onclick="setTeamFilter('type', 'original', this)">
+                                <div class="switch-card-icon"></div>
+                                <div class="switch-card-label">Ориг</div>
+                            </div>
+                            <div class="switch-card" data-type="translation" onclick="setTeamFilter('type', 'translation', this)">
+                                <div class="switch-card-icon">🌐</div>
+                                <div class="switch-card-label">Перевод</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-switcher-row">
+                        <div class="card-switcher-label">Отслеж</div>
+                        <div class="card-switcher" id="trackedSwitcher">
+                            <div class="switch-card active" data-tracked="all" onclick="setTeamFilter('tracked', 'all', this)">
+                                <div class="switch-card-icon"></div>
+                                <div class="switch-card-label">Все</div>
+                            </div>
+                            <div class="switch-card" data-tracked="tracked" onclick="setTeamFilter('tracked', 'tracked', this)">
+                                <div class="switch-card-icon">✅</div>
+                                <div class="switch-card-label">Да</div>
+                            </div>
+                            <div class="switch-card" data-tracked="untracked" onclick="setTeamFilter('tracked', 'untracked', this)">
+                                <div class="switch-card-icon">⏸️</div>
+                                <div class="switch-card-label">Нет</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="channels-list" id="teamChannelsList"></div>
+            </div>
+        
+
+            <!-- Вкладка Календарь -->
+            <div class="tab-content" id="tab-calendar">
+                <!-- Селекторы месяца и года -->
+                <div class="calendar-selector">
+                    <select id="calendarMonthSelect" onchange="changeCalendarMonth()">
+                        <option value="0">Январь</option>
+                        <option value="1">Февраль</option>
+                        <option value="2">Март</option>
+                        <option value="3">Апрель</option>
+                        <option value="4">Май</option>
+                        <option value="5">Июнь</option>
+                        <option value="6">Июль</option>
+                        <option value="7">Август</option>
+                        <option value="8">Сентябрь</option>
+                        <option value="9">Октябрь</option>
+                        <option value="10">Ноябрь</option>
+                        <option value="11">Декабрь</option>
+                    </select>
+                    <select id="calendarYearSelect" onchange="changeCalendarMonth()">
+                    </select>
+                </div>
+                
+                <!-- Фильтры -->
+                <div class="calendar-filters">
+                    <select id="calendarMemberFilter" class="filter-select" onchange="renderCalendar()">
+                        <option value="all">Все участники</option>
+                        <option value="Hongjoong">Хонджун</option>
+                        <option value="Seonghwa">Сонхва</option>
+                        <option value="Yunho">Юнхо</option>
+                        <option value="Yeosang">Ёсан</option>
+                        <option value="San">Сан</option>
+                        <option value="Mingi">Минги</option>
+                        <option value="Wooyoung">Уён</option>
+                        <option value="Jongho">Чонхо</option>
+                    </select>
+                    <select id="calendarCategoryFilter" class="filter-select" onchange="renderCalendar()">
+                        <option value="all">Все категории</option>
+                        <option value="MV">MV</option>
+                        <option value="logbook">Logbook</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Interview">Interview</option>
+                        <option value="WANTEEZ">WANTEEZ</option>
+                    </select>
+                </div>
+                
+                <!-- Сетка календаря -->
+                <div class="calendar-grid" id="calendarGrid"></div>
+                
+                <!-- Модальное окно дня -->
+                <div class="modal-overlay" id="dayModal">
+                    <div class="modal-content calendar-day-modal">
+                        <div class="modal-header">
+                            <div class="modal-title" id="dayModalTitle">1 июля 2026</div>
+                            <button class="modal-close" onclick="closeDayModal()">
+                                <svg class="icon"><use href="#i-x"/></svg>
+                            </button>
+                        </div>
+                        <div id="dayModalContent" class="day-modal-content"></div>
+                    </div>
+                </div>
+            </div>
+
+        <nav class="bottom-nav">
+            <div class="dune dune-1"></div>
+            <div class="dune dune-2"></div>
+            <div class="dune dune-3"></div>
+            <div class="nav-item active" onclick="switchTab('map', this)">
+                <div class="nav-icon-wrap">
+                    <svg class="nav-icon"><use href="#i-map"/></svg>
+                </div>
+                <span class="nav-label">Карта</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('new-videos', this)">
+                <div class="nav-icon-wrap">
+                    <svg class="nav-icon"><use href="#i-compass"/></svg>
+                </div>
+                <span class="nav-label">Сети</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('playlists', this)">
+                <div class="nav-icon-wrap">
+                    <svg class="nav-icon"><use href="#i-anchor"/></svg>
+                </div>
+                <span class="nav-label">Сокровища</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('translations', this)">
+                <div class="nav-icon-wrap">
+                    <svg class="nav-icon"><use href="#i-users"/></svg>
+                </div>
+                <span class="nav-label">Команда</span>
+            </div>
+            <div class="nav-item" onclick="switchTab('calendar', this)">
+                <div class="nav-icon-wrap">
+                    <svg class="nav-icon"><use href="#i-calendar"/></svg>
+                </div>
+                <span class="nav-label">Календарь</span>
+            </div>
+        </nav>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.ready();
+
+        const API_URL = 'https://script.google.com/macros/s/AKfycbzwhOpMeJHd1G1ts4xU94-UO0Krgc_io2qqDPOsBLw_YxJcl7X8VLkZo6wSaXI3OHgc/exec';
+
+        async function apiRequest(path, method = 'GET', body = null, params = {}) {
+            const url = new URL(API_URL);
+            url.searchParams.append('path', path);
+            if (params && params.id) {
+                url.searchParams.append('id', params.id);
+            }
+            if (method === 'GET') {
+                const response = await fetch(url.toString());
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            }
+            const options = {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ ...(body || {}), _method: method })
+            };
+            const response = await fetch(url.toString(), options);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            return await response.json();
+        }
+
+        let currentTab = 'map';
+        let currentFilter = 'all';
+        let currentMember = 'all';
+        let calendarMode = 'single';
+        let editingVideoId = null;
+        let editingLang = 'kr';
+        let currentPlaylistId = null;
+        let teamFilters = { type: 'all', tracked: 'all' };
+        let playlistSortAscending = false;
+        let videos = [];
+        let channels = [];
+        let playlists = [];
+        let categories = [];
+        let pendingVideos = [];
+        let eventsData = [];
+        let currentCalendarDate = new Date();
+        let currentCalendarYear = currentCalendarDate.getFullYear();
+        let currentCalendarMonth = currentCalendarDate.getMonth();
+        let sortAscending = false;
+        let pendingSortAscending = false;
+        let pendingDisplayLimit = 50;
+        let pendingAllVideos = [];
+        let currentPlaylistIdForAdd = null;
+        let approveLang = 'kr';
+        let approveAllMembers = false;
+
+        async function loadData() {
+            try {
+                const [videosData, pendingData, categoriesData, channelsData] = await Promise.all([
+                    apiRequest('videos', 'GET'),
+                    apiRequest('pending-videos', 'GET'),
+                    apiRequest('categories', 'GET'),
+                    apiRequest('channels', 'GET')
+                ]);
+                videos = videosData || [];
+                pendingVideos = pendingData || [];
+                categories = categoriesData || [];
+                channels = channelsData || [];
+                await loadEvents();
+                console.log('✅ Данные загружены');
+                if (currentTab === 'map') renderVideos();
+                else if (currentTab === 'new-videos') renderPendingVideos();
+                else if (currentTab === 'calendar') {
+                    initCalendarSelectors();
+                    renderCalendar();
+                }
+            } catch (error) {
+                console.error('❌ Ошибка загрузки:', error);
+            }
+        }
+
+
+        // Глобальные переменные календаря
+        
+        // Заполняем селектор года (от 2018 до 2030)
+        function initCalendarSelectors() {
+            const yearSelect = document.getElementById('calendarYearSelect');
+            const monthSelect = document.getElementById('calendarMonthSelect');
+            
+            if (yearSelect && yearSelect.options.length === 0) {
+                for (let y = 2018; y <= 2030; y++) {
+                    const opt = document.createElement('option');
+                    opt.value = y;
+                    opt.textContent = y;
+                    yearSelect.appendChild(opt);
+                }
+            }
+            
+            if (yearSelect) yearSelect.value = currentCalendarYear;
+            if (monthSelect) monthSelect.value = currentCalendarMonth;
+        }
+        
+        // Изменение месяца/года через селекторы
+        function changeCalendarMonth() {
+            const yearSelect = document.getElementById('calendarYearSelect');
+            const monthSelect = document.getElementById('calendarMonthSelect');
+            if (yearSelect) currentCalendarYear = parseInt(yearSelect.value);
+            if (monthSelect) currentCalendarMonth = parseInt(monthSelect.value);
+            renderCalendar();
+        }
+        
+       
+        
+        // Загрузка событий
+        async function loadEvents() {
+            try {
+                const result = await apiRequest('events', 'GET');
+                
+                // Нормализация: гарантируем что eventsData — массив
+                if (Array.isArray(result)) {
+                    eventsData = result;
+                } else if (result && Array.isArray(result.logs)) {
+                    eventsData = result.logs;
+                } else {
+                    eventsData = [];
+                }
+                
+                // Нормализуем поля каждого события
+                eventsData = eventsData.map(event => {
+                    // videoIds: если строка — разбиваем в массив
+                    if (typeof event.video_ids === 'string') {
+                        event.videoIds = event.video_ids.split(',').map(id => id.trim()).filter(id => id);
+                    } else if (Array.isArray(event.videoIds)) {
+                        // уже массив
+                    } else {
+                        event.videoIds = [];
+                    }
+                    
+                    // members: если строка — разбиваем в массив
+                    if (typeof event.members === 'string') {
+                        event.members = event.members.split(',').map(m => m.trim()).filter(m => m);
+                    } else if (!Array.isArray(event.members)) {
+                        event.members = [];
+                    }
+                    
+                    // Флаги для особых событий
+                    event.isAnniversary = event.type === 'anniversary';
+                    event.isAtinyDay = event.type === 'atiny_day';
+                    
+                    return event;
+                });
+                
+                console.log('✅ Events loaded:', eventsData.length);
+            } catch (e) {
+                console.error('❌ Error loading events:', e);
+                eventsData = [];
+            }
+        }
+        
+        // Рендер календаря (понедельник первый)
+      function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            if (!grid) return;
+            
+            initCalendarSelectors();
+            
+            const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс'];
+            
+            let html = dayNames.map((day, idx) => 
+                `<div class="calendar-day-header ${idx >= 5 ? 'weekend' : ''}">${day}</div>`
+            ).join('');
+            
+            const firstDay = new Date(currentCalendarYear, currentCalendarMonth, 1);
+            const lastDay = new Date(currentCalendarYear, currentCalendarMonth + 1, 0);
+            
+            let startingDay = firstDay.getDay() - 1;
+            if (startingDay < 0) startingDay = 6;
+            
+            for (let i = 0; i < startingDay; i++) {
+                html += `<div></div>`;
+            }
+            
+            const memberFilter = document.getElementById('calendarMemberFilter').value;
+            const categoryFilter = document.getElementById('calendarCategoryFilter').value;
+            const today = new Date();
+            
+            for (let day = 1; day <= lastDay.getDate(); day++) {
+                const dateStr = `${String(day).padStart(2,'0')}.${String(currentCalendarMonth + 1).padStart(2,'0')}.${currentCalendarYear}`;
+                
+                const dayVideos = getVideosForDate(dateStr, memberFilter, categoryFilter);
+                const dayEvents = getEventsForDate(dateStr, memberFilter);
+                const totalCount = dayVideos.length + dayEvents.length;
+                
+                const isToday = today.getDate() === day && 
+                               today.getMonth() === currentCalendarMonth && 
+                               today.getFullYear() === currentCalendarYear;
+                
+                let specialClass = '';
+                let eventIcon = '';
+                dayEvents.forEach(ev => {
+                    if (ev.isAnniversary) { specialClass = 'anniversary'; eventIcon = '🎉'; }
+                    if (ev.isAtinyDay) { specialClass = 'atiny-day'; eventIcon = '💜'; }
+                });
+                
+                let dayClass = 'calendar-day';
+                if (isToday) dayClass += ' today';
+                if (specialClass) dayClass += ' ' + specialClass;
+                else if (totalCount > 0) dayClass += ' has-events';
+                
+                // Превью видео (до 6 штук)
+                let previewsHtml = '';
+                if (dayVideos.length > 0) {
+                    const maxPreviews = 6;
+                    const previews = dayVideos.slice(0, maxPreviews);
+                    previewsHtml = '<div class="calendar-day-previews">';
+                    previews.forEach(video => {
+                        previewsHtml += `
+                            <div class="calendar-day-preview-thumb">
+                                <img src="https://img.youtube.com/vi/${video.id}/default.jpg" alt="" loading="lazy">
+                            </div>
+                        `;
+                    });
+                    if (dayVideos.length > maxPreviews) {
+                        previewsHtml += `<div style="font-size:8px;color:var(--text-dim);padding:2px;">+${dayVideos.length - maxPreviews}</div>`;
+                    }
+                    previewsHtml += '</div>';
+                }
+                
+                html += `
+                    <div class="${dayClass}" onclick="openDayModal('${dateStr}')">
+                        <div class="calendar-day-number">${day}</div>
+                        ${eventIcon ? `<div class="calendar-day-event-icon">${eventIcon}</div>` : ''}
+                        ${previewsHtml}
+                    </div>
+                `;
+            }
+            
+            grid.innerHTML = html;
+        }
+
+        function getVideosForDate(dateStr, memberFilter, categoryFilter) {
+            return videos.filter(video => {
+                if (video.date !== dateStr) return false;
+                if (memberFilter !== 'all' && (!video.members || !video.members.includes(memberFilter))) return false;
+                if (categoryFilter !== 'all' && video.category !== categoryFilter) return false;
+                return true;
+            });
+        }
+        function getVideosFromEvent(event) {
+            const videoIds = Array.isArray(event.videoIds) 
+                ? event.videoIds 
+                : (typeof event.video_ids === 'string' 
+                    ? event.video_ids.split(',').map(id => id.trim()).filter(id => id) 
+                    : []);
+            return videos.filter(v => videoIds.includes(v.id));
+        }
+
+        function getEventsForDate(dateStr, memberFilter) {
+            return eventsData.filter(event => {
+                if (event.date !== dateStr) return false;
+                if (memberFilter !== 'all' && (!event.members || !event.members.includes(memberFilter))) return false;
+                return true;
+            });
+        }
+
+        function getEventsForDate(dateStr, memberFilter) {
+            // Защита: если eventsData не массив — возвращаем пустой массив
+            if (!Array.isArray(eventsData)) {
+                console.warn('⚠️ eventsData is not an array:', eventsData);
+                return [];
+            }
+            
+            return eventsData.filter(event => {
+                if (event.date !== dateStr) return false;
+                if (memberFilter !== 'all') {
+                    const members = Array.isArray(event.members) ? event.members : [];
+                    if (!members.includes(memberFilter)) return false;
+                }
+                return true;
+            });
+        }
+
+        function openDayModal(dateStr) {
+            const modal = document.getElementById('dayModal');
+            const title = document.getElementById('dayModalTitle');
+            const content = document.getElementById('dayModalContent');
+            if (!modal || !title || !content) return;
+            
+            const [day, month, year] = dateStr.split('.');
+            const monthNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня',
+                               'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+            title.textContent = `${day} ${monthNames[parseInt(month) - 1]} ${year}`;
+            
+            const memberFilter = document.getElementById('calendarMemberFilter').value;
+            const categoryFilter = document.getElementById('calendarCategoryFilter').value;
+            
+            const dayVideos = getVideosForDate(dateStr, memberFilter, categoryFilter);
+            const dayEvents = getEventsForDate(dateStr, memberFilter);
+            
+            let html = '';
+            
+            // Особые события (годовщины)
+            const specialEvents = dayEvents.filter(e => e.isAnniversary || e.isAtinyDay);
+            const regularEvents = dayEvents.filter(e => !e.isAnniversary && !e.isAtinyDay);
+            
+            if (specialEvents.length > 0) {
+                html += '<div style="margin-bottom:16px;">';
+                specialEvents.forEach(event => {
+                    const bgColor = event.isAnniversary ? 'rgba(255,215,0,0.2)' : 'rgba(138,43,226,0.2)';
+                    const borderColor = event.isAnniversary ? 'gold' : '#8a2be2';
+                    html += `
+                        <div class="day-event" style="background:${bgColor};border:1px solid ${borderColor};">
+                            <div class="day-event-title">${event.title}</div>
+                            <div class="day-event-meta">${event.description}</div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Обычные события
+            if (regularEvents.length > 0) {
+                html += '<div style="margin-bottom:16px;"><div style="font-size:12px;color:var(--orange);margin-bottom:8px;font-weight:700;">📅 СОБЫТИЯ</div>';
+                regularEvents.forEach(event => {
+                    html += `
+                        <div class="day-event">
+                            <div class="day-event-title">${event.title || 'Событие'}</div>
+                            ${event.description ? `<div style="font-size:12px;color:var(--text-dim);margin:4px 0;">${event.description}</div>` : ''}
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Видео — используем renderVideoCard как на вкладке Карта
+            if (dayVideos.length > 0) {
+                html += '<div><div style="font-size:12px;color:var(--sand);margin-bottom:8px;font-weight:700;">🎥 ВИДЕО (' + dayVideos.length + ')</div>';
+                dayVideos.forEach(video => {
+                    // Нормализуем members
+                    let members = video.members || [];
+                    if (typeof members === 'string') {
+                        members = members.split(',').map(m => m.trim()).filter(m => m);
+                    }
+                    // Если все 8 — показываем от8
+                    const membersDisplay = members.length === 8 ? ['от8'] : members;
+                    
+                    html += `
+                        <div class="video-card" style="margin-bottom:8px;">
+                            <div class="video-left">
+                                <div class="video-thumbnail">
+                                    <img src="https://img.youtube.com/vi/${video.id}/hqdefault.jpg" alt="">
+                                    <div class="video-duration">${video.duration || '0:00'}</div>
+                                </div>
+                            </div>
+                            <div class="video-info">
+                                <div>
+                                    <div class="video-title">${video.title || 'Без названия'}</div>
+                                    <div class="video-meta">
+                                        ${membersDisplay.map(m => `<span class="member-tag ${m === 'от8' ? 'all-members' : ''}">${m}</span>`).join('')}
+                                        <span class="meta-dot"></span>
+                                        <span>${video.category || ''}</span>
+                                    </div>
+                                </div>
+                                <div class="video-actions">
+                                    ${video.kr_url ? `<a class="video-link kr" href="${video.kr_url}" target="_blank"><svg class="icon icon-sm"><use href="#i-link"/></svg>KR</a>` : ''}
+                                    ${video.en_url && !video.kr_url ? `<a class="video-link en" href="${video.en_url}" target="_blank"><svg class="icon icon-sm"><use href="#i-link"/></svg>EN</a>` : ''}
+                                    ${video.ru_url ? `<a class="video-link ru" href="${video.ru_url}" target="_blank"><svg class="icon icon-sm"><use href="#i-link"/></svg>RU</a>` : '<span class="video-link disabled">RU</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            if (dayVideos.length === 0 && dayEvents.length === 0) {
+                html = '<div style="text-align:center;color:var(--text-dim);padding:40px;">Нет событий за этот день</div>';
+            }
+            
+            content.innerHTML = html;
+            modal.classList.add('visible');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function closeDayModal() {
+            const modal = document.getElementById('dayModal');
+            if (modal) modal.classList.remove('visible');
+        }
+
+        function switchTab(tabName, el) {
+            currentTab = tabName;
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            const tabElement = document.getElementById(`tab-${tabName}`);
+            if (tabElement) tabElement.classList.add('active');
+            document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+            if (el) el.classList.add('active');
+            const searchContainer = document.getElementById('searchContainer');
+            if (tabName === 'translations' || tabName === 'playlists' || tabName === 'calendar') {
+                if (searchContainer) searchContainer.style.display = 'none';
+            } else {
+                if (searchContainer) searchContainer.style.display = 'flex';
+            }
+            if (tabName === 'map') renderVideos();
+            if (tabName === 'new-videos') renderPendingVideos();
+            if (tabName === 'playlists') renderPlaylists();
+            if (tabName === 'calendar') {
+                initCalendarSelectors();
+                renderCalendar();
+            }
+            if (tabName === 'translations') renderTeamChannels();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function getFilteredVideos() {
+            const textQuery = document.getElementById('searchText').value.trim().toLowerCase();
+            const dateQuery = document.getElementById('searchDate').value;
+            const fromDate = document.getElementById('dateFrom').value;
+            const toDate = document.getElementById('dateTo').value;
+            return videos.filter(video => {
+                let show = true;
+                if (currentFilter === 'MV') show = video.category === 'MV';
+                else if (currentFilter === 'Awards') show = video.category === 'Awards';
+                else if (currentFilter === 'Interview') show = video.category === 'Interview';
+                else if (currentFilter === 'unwatched') {
+                    if (video.ru_url) show = !video.watched_ru;
+                    else if (video.en_url && video.original_lang === 'kr') show = !video.watched_en;
+                    else show = !video.watched_original;
+                }
+                else if (currentFilter === 'translated') show = !!(video.ru_url || (video.en_url && video.original_lang === 'kr'));
+                if (currentMember !== 'all') show = show && video.members.includes(currentMember);
+                if (show && textQuery) show = video.title.toLowerCase().includes(textQuery);
+                if (show && calendarMode === 'single' && dateQuery) show = video.date === dateQuery;
+                else if (show && calendarMode === 'range' && (fromDate || toDate)) {
+                    if (fromDate) show = show && video.date >= fromDate;
+                    if (toDate) show = show && video.date <= toDate;
+                }
+                return show;
+            });
+        }
+
+        function renderMemberTags(members) {
+            if (members.length === 8) {
+                return `<span class="member-tag all-members">от8</span>`;
+            }
+            return members.map(m => `<span class="member-tag">${m}</span>`).join('');
+        }
+
+        async function toggleVideoProgress(videoId) {
+            const video = videos.find(v => v.id === videoId);
+            if (!video) return;
+            const watchedOriginal = String(video.watchedOriginal).toLowerCase() === 'true';
+            const watchedRu = String(video.watchedRu).toLowerCase() === 'true';
+            const watchedEn = String(video.watchedEn).toLowerCase() === 'true';
+            let newOriginal = watchedOriginal;
+            let newRu = watchedRu;
+            let newEn = watchedEn;
+            if (watchedOriginal && watchedRu && watchedEn) {
+                newOriginal = false;
+                newRu = false;
+                newEn = false;
+            } else if (!watchedOriginal) {
+                newOriginal = true;
+            } else if (!watchedRu) {
+                newRu = true;
+            } else if (!watchedEn) {
+                newEn = true;
+            }
+            video.watchedOriginal = newOriginal;
+            video.watchedRu = newRu;
+            video.watchedEn = newEn;
+            try {
+                await apiRequest('videos', 'PUT', {
+                    id: videoId,
+                    watchedOriginal: newOriginal,
+                    watchedRu: newRu,
+                    watchedEn: newEn
+                }, { id: videoId });
+                await loadData();
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            } catch (error) {
+                console.error('Ошибка:', error);
+                alert('Не удалось сохранить прогресс');
+            }
+        }
+
+        function renderVideoCard(video, controlsHtml) {
+            const videoId = video.id || video.video_id || video.youtube_id || '';
+            const krUrl = video.kr_url || video.krUrl || '';
+            const ruUrl = video.ru_url || video.ruUrl || '';
+            const enUrl = video.en_url || video.enUrl || '';
+            const originalLang = video.original_lang || video.originalLang || 'kr';
+            const watchedOriginal = video.watched_original === true || video.watched_original === 'true' || video.watchedOriginal === true;
+            const watchedRu = video.watched_ru === true || video.watched_ru === 'true' || video.watchedRu === true;
+            const watchedEn = video.watched_en === true || video.watched_en === 'true' || video.watchedEn === true;
+            let members = video.members || [];
+            if (typeof members === 'string') {
+                members = members.split(',').map(m => m.trim()).filter(m => m);
+            }
+            const memberTagsHtml = renderMemberTags(members);
+            let progressPercent = 0;
+            let label = '—';
+            if (!ruUrl && watchedOriginal) {
+                progressPercent = 100;
+                label = '✓';
+            } else if (ruUrl && watchedRu) {
+                progressPercent = 100;
+                label = '✓';
+            } else if (ruUrl && !watchedRu && watchedOriginal) {
+                progressPercent = 50;
+                label = '50%';
+            }
+            const catShort = categories.find(c => c.name === video.category)?.short_name || '';
+            return `
+                <div class="video-left">
+                    <div class="video-thumbnail">
+                        <img src="https://img.youtube.com/vi/${videoId}/hqdefault.jpg" alt="">
+                        <div class="video-duration">${video.duration || '0:00'}</div>
+                        ${catShort ? `<div class="category-badge">${catShort}</div>` : ''}
+                    </div>
+                    <div class="thumbnail-controls">
+                        <div class="edit-btn" onclick="openEditModal('${videoId}')">
+                            <svg class="icon"><use href="#i-edit"/></svg>
+                        </div>
+                        ${controlsHtml || ''}
+                    </div>
+                </div>
+                <div class="video-info">
+                    <div>
+                        <div class="video-title">${video.title || 'Без названия'}</div>
+                        <div class="video-meta">
+                            ${memberTagsHtml}
+                            <span class="meta-dot"></span>
+                            <span>${video.date || ''}</span>
+                        </div>
+                    </div>
+                    <div class="video-actions">
+                        ${krUrl ? `<a class="video-link kr" href="${krUrl}" target="_blank"><svg class="icon icon-sm"><use href="#i-link"/></svg>KR</a>` : ''}
+                        ${enUrl && !krUrl ? `<a class="video-link en" href="${enUrl}" target="_blank"><svg class="icon icon-sm"><use href="#i-link"/></svg>EN</a>` : ''}
+                        ${enUrl && krUrl ? `<a class="video-link en" href="${enUrl}" target="_blank"><svg class="icon icon-sm"><use href="#i-link"/></svg>EN</a>` : ''}
+                        ${ruUrl ? `<a class="video-link ru" href="${ruUrl}" target="_blank"><svg class="icon icon-sm"><use href="#i-link"/></svg>RU</a>` : '<span class="video-link disabled">RU</span>'}
+                        <div class="watched-progress" onclick="toggleVideoProgress('${video.id}')" style="cursor:pointer;">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${progressPercent}%"></div>
+                                <span class="progress-label">${label}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderVideos() {
+            const container = document.getElementById('videoList');
+            if (!container) return;
+            let filteredVideos = getFilteredVideos();
+            const parseDate = (dateStr) => {
+                if (!dateStr) return new Date(0);
+                if (dateStr instanceof Date) return dateStr;
+                const str = String(dateStr).trim();
+                if (str.match(/^\d{2}[./]\d{2}[./]\d{4}$/)) {
+                    const [day, month, year] = str.split(/[./]/);
+                    return new Date(year, month - 1, day);
+                }
+                if (str.match(/^\d{4}-\d{2}-\d{2}/)) return new Date(str);
+                const parsed = new Date(str);
+                return isNaN(parsed.getTime()) ? new Date(0) : parsed;
+            };
+            filteredVideos.sort((a, b) => {
+                const dateA = parseDate(a.date);
+                const dateB = parseDate(b.date);
+                return sortAscending ? dateA - dateB : dateB - dateA;
+            });
+            container.innerHTML = filteredVideos.map(video => `<div class="video-card">${renderVideoCard(video)}</div>`).join('');
+            const countEl = document.getElementById('resultsCount');
+            if (countEl) countEl.textContent = `Найдено: ${filteredVideos.length}`;
+            const emptyState = document.getElementById('emptyState');
+            if (emptyState) {
+                emptyState.classList.toggle('visible', filteredVideos.length === 0);
+            }
+        }
+
+        function renderPlaylists() {
+            const container = document.getElementById('playlistsList');
+            if (!container) return;
+            container.innerHTML = playlists.map(playlist => {
+                const previewVideos = playlist.video_ids.slice(0, 3).map(vid => {
+                    const video = videos.find(v => v.id === vid);
+                    return video ? `<div class="playlist-preview-thumb"><img src="https://img.youtube.com/vi/${vid}/hqdefault.jpg" alt=""></div>` : '';
+                }).join('');
+                const typeBadge = playlist.type === 'dynamic'
+                    ? '<span style="background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.5);color:#4CAF50;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;margin-left:6px;">АВТО</span>'
+                    : '<span style="background:rgba(255,107,0,0.2);border:1px solid rgba(255,107,0,0.5);color:var(--orange);padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;margin-left:6px;">РУЧНОЙ</span>';
+                return `
+                    <div class="playlist-card" onclick="openPlaylistDetail('${playlist.id}')" style="cursor:pointer;">
+                        <div class="playlist-card-header" onclick="event.stopPropagation();">
+                            <div style="flex:1;">
+                                <div class="playlist-name">${playlist.name}${typeBadge}</div>
+                                <div class="playlist-count">${playlist.video_ids.length} видео</div>
+                            </div>
+                            <div style="display:flex;gap:4px;">
+                                <button class="playlist-delete-btn" onclick="openAddToPlaylistModal('${playlist.id}')" style="background:rgba(76,175,80,0.2);border:1px solid rgba(76,175,80,0.5);">
+                                    <svg class="icon" style="color:#4CAF50;"><use href="#i-plus"/></svg>
+                                </button>
+                                <button class="playlist-delete-btn" onclick="deletePlaylist('${playlist.id}')">
+                                    <svg class="icon"><use href="#i-trash"/></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="playlist-preview">${previewVideos}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function openPlaylistDetail(playlistId) {
+            const playlist = playlists.find(p => p.id === playlistId);
+            if (!playlist) return;
+            currentPlaylistIdForAdd = playlistId;
+            document.getElementById('playlistsContainer').style.display = 'none';
+            document.getElementById('playlistDetail').style.display = 'block';
+            document.getElementById('playlistDetailTitle').textContent = playlist.name;
+            document.getElementById('playlistDetailCount').textContent = `${playlist.video_ids.length} видео`;
+            renderPlaylistVideos(playlist);
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function closePlaylistDetail() {
+            document.getElementById('playlistDetail').style.display = 'none';
+            document.getElementById('playlistsContainer').style.display = 'block';
+            currentPlaylistIdForAdd = null;
+            playlistSortAscending = false;
+            const sortBtn = document.querySelector('.playlist-detail-btn.sort');
+            if (sortBtn) sortBtn.classList.remove('active');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function renderPlaylistVideos(playlist) {
+            const container = document.getElementById('playlistVideosList');
+            const emptyState = document.getElementById('playlistEmptyState');
+            if (!container) return;
+            let playlistVideos = playlist.video_ids.map(vid => videos.find(v => v.id === vid)).filter(v => v);
+            playlistVideos.sort((a, b) => {
+                const parseDate = (dateStr) => {
+                    if (!dateStr) return new Date(0);
+                    if (dateStr instanceof Date) return dateStr;
+                    const str = String(dateStr).trim();
+                    if (str.match(/^\d{2}[./]\d{2}[./]\d{4}$/)) {
+                        const [day, month, year] = str.split(/[./]/);
+                        return new Date(year, month - 1, day);
+                    }
+                    if (str.match(/^\d{4}-\d{2}-\d{2}/)) return new Date(str);
+                    const parsed = new Date(str);
+                    return isNaN(parsed.getTime()) ? new Date(0) : parsed;
+                };
+                const dateA = parseDate(a.date);
+                const dateB = parseDate(b.date);
+                return playlistSortAscending ? dateA - dateB : dateB - dateA;
+            });
+            if (playlistVideos.length === 0) {
+                container.innerHTML = '';
+                emptyState.classList.add('visible');
+                return;
+            }
+            emptyState.classList.remove('visible');
+            container.innerHTML = playlistVideos.map(video => `<div class="video-card">${renderVideoCard(video)}</div>`).join('');
+        }
+
+        function renderTeamChannels() {
+            const container = document.getElementById('teamChannelsList');
+            if (!container) return;
+            let filtered = channels;
+            if (teamFilters.type !== 'all') {
+                filtered = filtered.filter(c => c.type === teamFilters.type);
+            }
+            if (teamFilters.tracked === 'tracked') {
+                filtered = filtered.filter(c => c.tracked);
+            } else if (teamFilters.tracked === 'untracked') {
+                filtered = filtered.filter(c => !c.tracked);
+            }
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-new-videos"><div class="empty-new-videos-text">Каналы не найдены</div></div>';
+                return;
+            }
+            container.innerHTML = filtered.map(channel => `
+                <div class="channel-card">
+                    <div class="channel-icon ${channel.type}">${channel.type === 'original' ? '🎬' : '🌐'}</div>
+                    <div class="channel-details">
+                        <div class="channel-name">${channel.name}</div>
+                        <div class="channel-meta">${channel.url ? channel.url.substring(0, 20) + '...' : ''}</div>
+                    </div>
+                    <div class="channel-badges">
+                        <span class="badge ${channel.type === 'original' ? 'badge-original' : 'badge-translation'}">
+                            ${channel.type === 'original' ? 'ОРИГ' : 'ПЕРЕВ'}
+                        </span>
+                        <span class="badge ${channel.tracked ? 'badge-tracked' : 'badge-untracked'}">
+                            ${channel.tracked ? '✅' : '⏸️'}
+                        </span>
+                    </div>
+                    <div class="channel-actions">
+                        <button class="channel-action-btn tracked-btn ${channel.tracked ? 'active' : ''}" onclick="toggleChannelTracked('${channel.id}')">
+                            <svg class="icon"><use href="#i-eye"/></svg>
+                        </button>
+                        <button class="channel-action-btn" onclick="editChannel('${channel.id}')">
+                            <svg class="icon"><use href="#i-edit"/></svg>
+                        </button>
+                        <button class="channel-action-btn" onclick="deleteChannel('${channel.id}')">
+                            <svg class="icon"><use href="#i-trash"/></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function togglePendingSort() {
+            pendingSortAscending = !pendingSortAscending;
+            document.getElementById('pendingSortLabel').textContent = pendingSortAscending ? 'Сначала старые' : 'Сначала новые';
+            pendingDisplayLimit = 50;
+            renderPendingVideos();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function parsePendingDate(dateStr) {
+            if (!dateStr) return new Date(0);
+            if (dateStr instanceof Date) return dateStr;
+            const str = String(dateStr).trim();
+            if (str.match(/^\d{2}[./]\d{2}[./]\d{4}$/)) {
+                const [day, month, year] = str.split(/[./]/);
+                return new Date(year, month - 1, day);
+            }
+            if (str.match(/^\d{4}-\d{2}-\d{2}/)) return new Date(str);
+            const parsed = new Date(str);
+            return isNaN(parsed.getTime()) ? new Date(0) : parsed;
+        }
+
+        function renderPendingVideos() {
+            const container = document.getElementById('newVideosList');
+            const loadMoreContainer = document.getElementById('loadMoreContainer');
+            if (!container) return;
+            if (pendingVideos.length === 0) {
+                container.innerHTML = '';
+                document.getElementById('emptyNewVideos').style.display = 'block';
+                loadMoreContainer.style.display = 'none';
+                document.getElementById('pendingResultsCount').textContent = 'Найдено: 0';
+                return;
+            }
+            document.getElementById('emptyNewVideos').style.display = 'none';
+            pendingAllVideos = [...pendingVideos];
+            pendingAllVideos.sort((a, b) => {
+                const dateA = parsePendingDate(a.published_at);
+                const dateB = parsePendingDate(b.published_at);
+                return pendingSortAscending ? dateA - dateB : dateB - dateA;
+            });
+            const videosToShow = pendingAllVideos.slice(0, pendingDisplayLimit);
+            const remaining = pendingAllVideos.length - pendingDisplayLimit;
+            container.innerHTML = videosToShow.map((video) => {
+                let displayDate = '';
+                if (video.published_at) {
+                    const dateStr = String(video.published_at);
+                    if (dateStr.includes('T')) {
+                        displayDate = dateStr.split('T')[0].split('-').reverse().join('.');
+                    } else if (dateStr.match(/^\d{2}[./]\d{2}[./]\d{4}$/)) {
+                        displayDate = dateStr.replace(/\//g, '.');
+                    } else if (dateStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+                        displayDate = dateStr.split('-').reverse().join('.');
+                    } else if (video.published_at instanceof Date) {
+                        const d = video.published_at;
+                        displayDate = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+                    } else {
+                        displayDate = dateStr;
+                    }
+                }
+                return `
+                    <div class="new-video-card">
+                        <div class="video-left">
+                            <div class="video-thumbnail">
+                                <img src="${video.thumbnail_url || `https://img.youtube.com/vi/${video.id}/hqdefault.jpg`}" alt="" loading="lazy">
+                                ${video.duration ? `<div class="video-duration">${video.duration}</div>` : ''}
+                            </div>
+                            <div class="thumbnail-controls">
+                                <div class="edit-btn" onclick="openApproveModal('${video.id}')" title="Добавить">
+                                    <svg class="icon"><use href="#i-check"/></svg>
+                                </div>
+                                <div class="remove-btn" onclick="deletePendingVideo('${video.id}')" title="Пропустить">
+                                    <svg class="icon"><use href="#i-x"/></svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="video-info">
+                            <div>
+                                <div class="pending-video-title">${video.title || 'Без названия'}</div>
+                                <div class="pending-video-meta">
+                                    <span>${video.channel_name || 'Неизвестно'}</span>
+                                    ${displayDate ? `<span class="meta-dot"></span><span>${displayDate}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('pendingResultsCount').textContent = `Найдено: ${pendingAllVideos.length}`;
+            if (remaining > 0) {
+                loadMoreContainer.style.display = 'block';
+                document.getElementById('remainingCount').textContent = remaining;
+            } else {
+                loadMoreContainer.style.display = 'none';
+            }
+        }
+
+        async function deletePendingVideo(videoId) {
+            const video = pendingVideos.find(v => v.id === videoId);
+            if (!video) return;
+            const confirmed = tg.showConfirm
+                ? await new Promise(resolve => tg.showConfirm(`Пропустить видео "${video.title}"?`, resolve))
+                : confirm(`Пропустить видео "${video.title}"?`);
+            if (!confirmed) return;
+            await apiRequest('pending-videos', 'DELETE', null, { id: videoId });
+            await loadData();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function loadMorePendingVideos() {
+            pendingDisplayLimit += 50;
+            renderPendingVideos();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function setTeamFilter(filterType, value, btn) {
+            teamFilters[filterType] = value;
+            const switcher = btn.closest('.card-switcher');
+            switcher.querySelectorAll('.switch-card').forEach(c => c.classList.remove('active'));
+            btn.classList.add('active');
+            renderTeamChannels();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        async function toggleChannelTracked(channelId) {
+            const channel = channels.find(c => c.id === channelId);
+            if (!channel) return;
+            channel.tracked = !channel.tracked;
+            await apiRequest('channels', 'PUT', channel, { id: channelId });
+            renderTeamChannels();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function openAddPlaylistModal() {
+            document.getElementById('newPlaylistName').value = '';
+            document.getElementById('addPlaylistModal').classList.add('visible');
+        }
+
+        function closeAddPlaylistModal() {
+            document.getElementById('addPlaylistModal').classList.remove('visible');
+        }
+
+        async function createPlaylist() {
+            const name = document.getElementById('newPlaylistName').value.trim();
+            if (!name) return;
+            await apiRequest('playlists', 'POST', { name });
+            closeAddPlaylistModal();
+            await loadData();
+            if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+        }
+
+        async function deletePlaylist(playlistId) {
+            const playlist = playlists.find(p => p.id === playlistId);
+            if (!playlist) return;
+            const confirmed = tg.showConfirm
+                ? await new Promise(resolve => tg.showConfirm(`Удалить плейлист "${playlist.name}"?`, resolve))
+                : confirm(`Удалить плейлист "${playlist.name}"?`);
+            if (!confirmed) return;
+            await apiRequest('playlists', 'DELETE', null, { id: playlistId });
+            await loadData();
+            closePlaylistDetail();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function selectApproveLang(lang) {
+            approveLang = lang;
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                opt.classList.remove('active');
+                opt.style.background = 'rgba(255,255,255,0.05)';
+                opt.style.borderColor = 'rgba(255,255,255,0.15)';
+                opt.style.color = 'var(--white)';
+            });
+            const activeBtn = document.querySelector(`.lang-option[data-lang="${lang}"]`);
+            activeBtn.classList.add('active');
+            activeBtn.style.background = 'rgba(255,107,0,0.3)';
+            activeBtn.style.borderColor = 'var(--orange)';
+            activeBtn.style.color = 'var(--orange)';
+        }
+
+        function toggleAllMembers(btn) {
+            approveAllMembers = !approveAllMembers;
+            btn.classList.toggle('active');
+            if (approveAllMembers) {
+                document.querySelectorAll('#approveMembers .member-select-btn').forEach(b => {
+                    b.classList.remove('active');
+                });
+            }
+        }
+
+        function toggleMemberBtn(btn) {
+            approveAllMembers = false;
+            document.querySelector('[data-member="all"]').classList.remove('active');
+            btn.classList.toggle('active');
+        }
+
+        function openApproveModal(videoId) {
+            const video = pendingVideos.find(v => v.id === videoId);
+            if (!video) return;
+            approveLang = 'kr';
+            approveAllMembers = false;
+            document.getElementById('approveVideoThumb').src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            document.getElementById('approveVideoTitle').textContent = video.title;
+            const categorySelect = document.getElementById('approveCategory');
+            categorySelect.innerHTML = categories.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+            const membersContainer = document.getElementById('approveMembers');
+            const allMembers = [
+                {id: 'Hongjoong', name: 'Хонджун'},
+                {id: 'Seonghwa', name: 'Сонхва'},
+                {id: 'Yunho', name: 'Юнхо'},
+                {id: 'Yeosang', name: 'Ёсан'},
+                {id: 'San', name: 'Сан'},
+                {id: 'Mingi', name: 'Минги'},
+                {id: 'Wooyoung', name: 'Уён'},
+                {id: 'Jongho', name: 'Чонхо'}
+            ];
+            membersContainer.innerHTML = allMembers.map(m => `
+                <button class="member-select-btn" data-member="${m.id}" onclick="toggleMemberBtn(this)" style="padding:6px 12px;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.15);border-radius:6px;color:var(--white);font-size:11px;font-weight:600;cursor:pointer;">
+                    ${m.name}
+                </button>
+            `).join('');
+            document.querySelector('[data-member="all"]').classList.remove('active');
+            document.getElementById('approveModal').classList.add('visible');
+        }
+
+        function closeApproveModal() {
+            document.getElementById('approveModal').classList.remove('visible');
+        }
+
+        async function approvePendingVideo() {
+            const videoId = document.getElementById('approveVideoThumb').src.split('/vi/')[1]?.split('/')[0];
+            if (!videoId) {
+                alert('Ошибка: не найден ID видео');
+                return;
+            }
+            const category = document.getElementById('approveCategory').value;
+            let members = [];
+            if (approveAllMembers) {
+                members = ['Hongjoong', 'Seonghwa', 'Yunho', 'Yeosang', 'San', 'Mingi', 'Wooyoung', 'Jongho'];
+            } else {
+                const activeBtns = document.querySelectorAll('#approveMembers .member-select-btn.active');
+                members = Array.from(activeBtns).map(btn => btn.dataset.member);
+            }
+            if (members.length === 0) {
+                alert('Выберите хотя бы одного участника или "от8"');
+                return;
+            }
+            const saveBtn = document.querySelector('#approveModal .modal-btn.save');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Добавление...';
+            saveBtn.disabled = true;
+            try {
+                const result = await apiRequest('pending-approve', 'POST', {
+                    id: videoId,
+                    category: category,
+                    members: members,
+                    original_lang: approveLang
+                });
+                if (result.error) {
+                    alert('Ошибка: ' + result.error);
+                    return;
+                }
+                closeApproveModal();
+                await loadData();
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            } catch (error) {
+                alert('Ошибка при добавлении: ' + error.message);
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function skipPendingVideo(videoId) {
+            await apiRequest('pending-videos', 'DELETE', null, { id: videoId });
+            await loadData();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function updateCategoryDropdown() {
+            const menu = document.getElementById('categoryMenu');
+            if (!menu) return;
+            const staticItems = ['all', 'MV', 'Awards', 'Interview', 'unwatched', 'translated'];
+            const dynamicCats = categories.filter(c => !staticItems.includes(c.name));
+            menu.querySelectorAll('.dynamic-category').forEach(el => el.remove());
+            dynamicCats.forEach(cat => {
+                const item = document.createElement('div');
+                item.className = 'dropdown-menu-item dynamic-category';
+                item.dataset.category = cat.name;
+                item.innerHTML = `
+                    <svg class="check-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                        <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    ${cat.name}
+                `;
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    document.querySelectorAll('#categoryMenu .dropdown-menu-item').forEach(i => i.classList.remove('active'));
+                    this.classList.add('active');
+                    currentFilter = this.dataset.category;
+                    document.getElementById('categoryLabel').textContent = cat.name;
+                    document.getElementById('categoryDropdown').classList.remove('open');
+                    document.getElementById('categoryMenu').classList.remove('visible');
+                    applyFilters();
+                });
+                menu.appendChild(item);
+            });
+        }
+
+        function toggleSort() {
+            sortAscending = !sortAscending;
+            document.getElementById('sortLabel').textContent = sortAscending ? 'Сначала старые' : 'Сначала новые';
+            renderVideos();
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function applyFilters() {
+            renderVideos();
+        }
+
+        function selectLang(lang) {
+            editingLang = lang;
+            document.querySelectorAll('#editModal .lang-option').forEach(opt => {
+                opt.classList.remove('active');
+                opt.style.background = 'rgba(255,255,255,0.05)';
+                opt.style.borderColor = 'rgba(255,255,255,0.15)';
+                opt.style.color = 'var(--white)';
+            });
+            const activeBtn = document.querySelector(`#editModal .lang-option[data-lang="${lang}"]`);
+            if (activeBtn) {
+                activeBtn.classList.add('active');
+                activeBtn.style.background = 'rgba(255,107,0,0.3)';
+                activeBtn.style.borderColor = 'var(--orange)';
+                activeBtn.style.color = 'var(--orange)';
+            }
+        }
+
+        function openEditModal(videoId) {
+            const video = videos.find(v => v.id === videoId);
+            if (!video) return;
+            editingVideoId = videoId;
+            const originalLang = video.original_lang || 'kr';
+            document.getElementById('editVideoThumb').src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+            document.getElementById('editTitle').value = video.title || '';
+            document.getElementById('editRuUrl').value = video.ru_url || '';
+            document.getElementById('editHashtags').value = video.hashtags || '';
+            let dateDisplay = '';
+            if (video.date) {
+                const dateStr = String(video.date);
+                if (dateStr.match(/^\d{4}-\d{2}-\d{2}/)) {
+                    const [year, month, day] = dateStr.split('-');
+                    dateDisplay = `${day}.${month}.${year}`;
+                } else if (dateStr.match(/^\d{2}[./]\d{2}[./]\d{4}$/)) {
+                    dateDisplay = dateStr.replace(/\//g, '.');
+                } else if (video.date instanceof Date) {
+                    const d = video.date;
+                    dateDisplay = `${String(d.getDate()).padStart(2,'0')}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`;
+                } else {
+                    dateDisplay = dateStr;
+                }
+            }
+            document.getElementById('editDate').value = dateDisplay;
+            const langDisplay = document.getElementById('editOriginalLangDisplay');
+            if (originalLang === 'kr') {
+                langDisplay.innerHTML = '🇰🇷 Корейский';
+                langDisplay.style.borderColor = 'rgba(255,107,0,0.5)';
+                langDisplay.style.color = '#ff6b00';
+            } else {
+                langDisplay.innerHTML = '🇧 Английский';
+                langDisplay.style.borderColor = 'rgba(66,133,244,0.5)';
+                langDisplay.style.color = '#4285f4';
+            }
+            const enUrlField = document.getElementById('editEnUrlField');
+            if (originalLang === 'kr') {
+                enUrlField.style.display = 'block';
+                document.getElementById('editEnUrl').value = video.en_url || '';
+            } else {
+                enUrlField.style.display = 'none';
+                document.getElementById('editEnUrl').value = '';
+            }
+            const categorySelect = document.getElementById('editCategory');
+            categorySelect.innerHTML = categories.map(c => `<option value="${c.name}" ${c.name === video.category ? 'selected' : ''}>${c.name}</option>`).join('');
+            const membersContainer = document.getElementById('editMembers');
+            const allMembers = [
+                {id: 'Hongjoong', name: 'Хонджун'},
+                {id: 'Seonghwa', name: 'Сонхва'},
+                {id: 'Yunho', name: 'Юнхо'},
+                {id: 'Yeosang', name: 'Ёсан'},
+                {id: 'San', name: 'Сан'},
+                {id: 'Mingi', name: 'Минги'},
+                {id: 'Wooyoung', name: 'Уён'},
+                {id: 'Jongho', name: 'Чонхо'}
+            ];
+            let members = video.members || [];
+            if (typeof members === 'string') {
+                members = members.split(',').map(m => m.trim()).filter(m => m);
+            }
+            membersContainer.innerHTML = allMembers.map(m => `
+                <div class="modal-member-tag ${members.includes(m.id) ? 'active' : ''}" data-member="${m.id}" onclick="toggleEditMember(this)">
+                    ${m.name}
+                </div>
+            `).join('');
+            document.getElementById('editModal').classList.add('visible');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+
+        function toggleEditMember(tag) {
+            tag.classList.toggle('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('visible');
+            editingVideoId = null;
+        }
+
+        async function saveEdit() {
+            if (!editingVideoId) return;
+            const video = videos.find(v => v.id === editingVideoId);
+            if (!video) return;
+            const title = document.getElementById('editTitle').value.trim();
+            const ruUrl = document.getElementById('editRuUrl').value.trim();
+            const hashtags = document.getElementById('editHashtags').value.trim();
+            const category = document.getElementById('editCategory').value;
+            const dateStr = document.getElementById('editDate').value.trim();
+            const originalLang = video.original_lang || 'kr';
+            let enUrl = '';
+            if (originalLang === 'kr') {
+                enUrl = document.getElementById('editEnUrl').value.trim();
+            }
+            if (!title) {
+                alert('Название не может быть пустым');
+                return;
+            }
+            let dateToSave = '';
+            if (dateStr) {
+                const match = dateStr.match(/^(\d{2})[./](\d{2})[./](\d{4})$/);
+                if (match) {
+                    dateToSave = `${match[1]}.${match[2]}.${match[3]}`;
+                } else {
+                    alert('Неверный формат даты. Используйте dd.mm.yyyy (например, 22.07.2026)');
+                    return;
+                }
+            }
+            video.title = title;
+            video.ru_url = ruUrl;
+            video.hashtags = hashtags;
+            video.category = category;
+            video.date = dateToSave;
+            if (originalLang === 'kr') {
+                video.en_url = enUrl;
+            }
+            const activeTags = document.querySelectorAll('#editMembers .modal-member-tag.active');
+            video.members = Array.from(activeTags).map(tag => tag.dataset.member);
+            const saveBtn = document.querySelector('#editModal .modal-btn.save');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Сохранение...';
+            saveBtn.disabled = true;
+            try {
+                const result = await apiRequest('videos', 'PUT', video, { id: editingVideoId });
+                if (result.error) {
+                    alert('Ошибка: ' + result.error);
+                    return;
+                }
+                closeEditModal();
+                await loadData();
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            } catch (error) {
+                alert('Ошибка при сохранении: ' + error.message);
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+
+        async function deleteVideoFromEdit() {
+            if (!editingVideoId) return;
+            const video = videos.find(v => v.id === editingVideoId);
+            if (!video) return;
+            const confirmed = tg.showConfirm
+                ? await new Promise(resolve => tg.showConfirm(`Удалить видео "${video.title}"?`, resolve))
+                : confirm(`Удалить видео "${video.title}"?`);
+            if (!confirmed) return;
+            const deleteBtn = document.querySelector('#editModal .modal-btn.delete');
+            const originalText = deleteBtn.textContent;
+            deleteBtn.textContent = 'Удаление...';
+            deleteBtn.disabled = true;
+            try {
+                const result = await apiRequest('videos', 'DELETE', null, { id: editingVideoId });
+                if (result && result.error) {
+                    alert('Ошибка: ' + result.error);
+                    return;
+                }
+                closeEditModal();
+                await loadData();
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            } catch (error) {
+                alert('Ошибка при удалении: ' + error.message);
+            } finally {
+                deleteBtn.textContent = originalText;
+                deleteBtn.disabled = false;
+            }
+        }
+
+        function openAddToPlaylistModal(playlistId) {
+            currentPlaylistIdForAdd = playlistId;
+            document.getElementById('playlistVideoSearch').value = '';
+            document.getElementById('addToPlaylistModal').classList.add('visible');
+            renderPlaylistVideoList();
+        }
+
+        function closeAddToPlaylistModal() {
+            document.getElementById('addToPlaylistModal').classList.remove('visible');
+            currentPlaylistIdForAdd = null;
+        }
+
+        function renderPlaylistVideoList(filter = '') {
+            const container = document.getElementById('playlistVideoList');
+            if (!container) return;
+            const playlist = playlists.find(p => p.id === currentPlaylistIdForAdd);
+            if (!playlist) return;
+            const existingIds = new Set(playlist.video_ids);
+            const filteredVideos = videos.filter(video => {
+                if (!video.id) return false;
+                if (existingIds.has(video.id)) return false;
+                if (filter && !video.title.toLowerCase().includes(filter.toLowerCase())) return false;
+                return true;
+            });
+            if (filteredVideos.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text-muted);">Нет доступных видео</div>';
+                return;
+            }
+            container.innerHTML = filteredVideos.map(video => `
+                <div style="display:flex;align-items:center;gap:10px;padding:8px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;" onclick="addVideoToPlaylist('${video.id}')">
+                    <img src="https://img.youtube.com/vi/${video.id}/hqdefault.jpg" style="width:60px;height:34px;border-radius:4px;object-fit:cover;">
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${video.title}</div>
+                        <div style="font-size:10px;color:var(--text-muted);">${video.date || ''}</div>
+                    </div>
+                    <svg class="icon" style="color:var(--orange);"><use href="#i-plus"/></svg>
+                </div>
+            `).join('');
+        }
+
+        function filterPlaylistVideos() {
+            const filter = document.getElementById('playlistVideoSearch').value;
+            renderPlaylistVideoList(filter);
+        }
+
+        async function addVideoToPlaylist(videoId) {
+            if (!currentPlaylistIdForAdd) return;
+            try {
+                const result = await apiRequest('playlist-add-video', 'POST', {
+                    playlist_id: currentPlaylistIdForAdd,
+                    video_id: videoId
+                });
+                if (result.error) {
+                    alert('Ошибка: ' + result.error);
+                    return;
+                }
+                await loadData();
+                const playlist = playlists.find(p => p.id === currentPlaylistIdForAdd);
+                if (playlist && document.getElementById('playlistDetail').style.display !== 'none') {
+                    renderPlaylistVideos(playlist);
+                    document.getElementById('playlistDetailCount').textContent = `${playlist.video_ids.length} видео`;
+                }
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            } catch (error) {
+                alert('Ошибка при добавлении: ' + error.message);
+            }
+        }
+
+        document.getElementById('calendarBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            document.getElementById('calendarDropdown').classList.toggle('visible');
+            this.classList.toggle('active');
+        });
+
+        document.querySelectorAll('.calendar-mode-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.calendar-mode-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                calendarMode = this.dataset.mode;
+                document.getElementById('dateRangeFields').classList.toggle('visible', calendarMode === 'range');
+                document.getElementById('searchDate').style.display = calendarMode === 'range' ? 'none' : 'block';
+            });
+        });
+
+        document.getElementById('calendarClear').addEventListener('click', function() {
+            document.getElementById('searchDate').value = '';
+            document.getElementById('dateFrom').value = '';
+            document.getElementById('dateTo').value = '';
+            this.classList.remove('visible');
+            applyFilters();
+        });
+
+        const categoryDropdown = document.getElementById('categoryDropdown');
+        const categoryMenu = document.getElementById('categoryMenu');
+        document.getElementById('categoryTrigger').addEventListener('click', function(e) {
+            e.stopPropagation();
+            categoryDropdown.classList.toggle('open');
+            categoryMenu.classList.toggle('visible');
+        });
+
+        document.addEventListener('click', function(e) {
+            const calendarBtn = document.getElementById('calendarBtn');
+            const calendarDropdown = document.getElementById('calendarDropdown');
+            if (!calendarBtn.contains(e.target) && !calendarDropdown.contains(e.target)) {
+                calendarDropdown.classList.remove('visible');
+                calendarBtn.classList.remove('active');
+            }
+            if (!categoryDropdown.contains(e.target)) {
+                categoryDropdown.classList.remove('open');
+                categoryMenu.classList.remove('visible');
+            }
+        });
+
+        ['searchText', 'searchDate', 'dateFrom', 'dateTo'].forEach(id => {
+            document.getElementById(id).addEventListener('input', applyFilters);
+        });
+
+        loadData();
+    </script>
+
+    <!-- Модальное окно одобрения видео -->
+    <div class="modal-overlay" id="approveModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Добавить видео</div>
+                <button class="modal-close" onclick="closeApproveModal()">
+                    <svg class="icon"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            <div class="video-thumbnail" style="width:100%;height:180px;margin-bottom:16px;">
+                <img id="approveVideoThumb" src="" alt="">
+            </div>
+            <div class="modal-field">
+                <div style="font-size:14px;font-weight:600;margin-bottom:4px;" id="approveVideoTitle"></div>
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Язык оригинала</div>
+                <div class="lang-options" style="display:flex;gap:8px;">
+                    <button class="lang-option active" data-lang="kr" onclick="selectApproveLang('kr')" style="flex:1;padding:10px;background:rgba(255,107,0,0.2);border:2px solid var(--orange);border-radius:8px;color:var(--white);font-weight:700;cursor:pointer;">
+                        🇰🇷 Корейский
+                    </button>
+                    <button class="lang-option" data-lang="en" onclick="selectApproveLang('en')" style="flex:1;padding:10px;background:rgba(255,255,255,0.05);border:2px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--white);font-weight:700;cursor:pointer;">
+                        🇬 Английский
+                    </button>
+                </div>
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Категория</div>
+                <select class="modal-input" id="approveCategory" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--white);font-size:14px;outline:none;"></select>
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Участники</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+                    <button class="member-select-btn" data-member="all" onclick="toggleAllMembers(this)" style="padding:6px 12px;background:rgba(255,107,0,0.2);border:2px solid var(--orange);border-radius:6px;color:var(--white);font-size:12px;font-weight:700;cursor:pointer;">
+                        от8
+                    </button>
+                </div>
+                <div id="approveMembers" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeApproveModal()">Отмена</button>
+                <button class="modal-btn save" onclick="approvePendingVideo()">Добавить</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно добавления видео в плейлист -->
+    <div class="modal-overlay" id="addToPlaylistModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Добавить видео в плейлист</div>
+                <button class="modal-close" onclick="closeAddToPlaylistModal()">
+                    <svg class="icon"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Выберите видео</div>
+                <input type="text" class="modal-input" id="playlistVideoSearch" placeholder="Поиск по названию..." oninput="filterPlaylistVideos()">
+            </div>
+            <div id="playlistVideoList" style="max-height:300px;overflow-y:auto;margin-bottom:16px;"></div>
+            <div class="modal-actions">
+                <button class="modal-btn cancel" onclick="closeAddToPlaylistModal()">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальное окно редактирования видео -->
+    <div class="modal-overlay" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Редактировать видео</div>
+                <button class="modal-close" onclick="closeEditModal()">
+                    <svg class="icon"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            <div class="video-thumbnail" style="width:100%;height:180px;margin-bottom:16px;">
+                <img id="editVideoThumb" src="" alt="">
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Название</div>
+                <input type="text" class="modal-input" id="editTitle">
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Язык оригинала</div>
+                <div id="editOriginalLangDisplay" style="padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--white);font-size:14px;font-weight:600;"></div>
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Ссылка на перевод (RU)</div>
+                <input type="text" class="modal-input" id="editRuUrl" placeholder="https://youtube.com/watch?v=...">
+            </div>
+            <div class="modal-field" id="editEnUrlField" style="display:none;">
+                <div class="modal-label">Ссылка на перевод (EN)</div>
+                <input type="text" class="modal-input" id="editEnUrl" placeholder="https://youtube.com/watch?v=...">
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Дата публикации (dd.mm.yyyy)</div>
+                <input type="text" class="modal-input" id="editDate" placeholder="22.07.2026">
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Категория</div>
+                <select class="modal-input" id="editCategory" style="width:100%;padding:10px 12px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:var(--white);font-size:14px;outline:none;"></select>
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Хэштеги (через запятую)</div>
+                <input type="text" class="modal-input" id="editHashtags" placeholder="#ATEEZ, #WANTEEZ">
+            </div>
+            <div class="modal-field">
+                <div class="modal-label">Участники</div>
+                <div id="editMembers" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn delete" onclick="deleteVideoFromEdit()" style="background:rgba(234,67,53,0.2);border:1px solid rgba(234,67,53,0.5);color:#ea4335;flex:1;">
+                    Удалить
+                </button>
+                <button class="modal-btn cancel" onclick="closeEditModal()" style="flex:1;">
+                    Отмена
+                </button>
+                <button class="modal-btn save" onclick="saveEdit()" style="flex:1;">
+                    Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

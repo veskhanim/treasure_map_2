@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 # 1. Явно указываем абсолютный путь к файлу .env
 # file - это путь к текущему файлу bot.py, os.path.dirname берёт папку 'bot'
-env_path = os.path.join(os.path.dirname(os.path.abspath(file)), '.env')
+env_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')
 
 # 2. Загружаем переменные из этого конкретного файла
 load_dotenv(dotenv_path=env_path)

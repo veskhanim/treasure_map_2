@@ -1,18 +1,30 @@
 import os
-
+import logging
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.constants import ParseMode
 from dotenv import load_dotenv
 
-# Загружаем переменные из файла .env
-load_dotenv()
+# 1. Явно указываем абсолютный путь к файлу .env
+# file - это путь к текущему файлу bot.py, os.path.dirname берёт папку 'bot'
+env_path = os.path.join(os.path.dirname(os.path.abspath(file)), '.env')
 
-# Теперь читаем переменные
+# 2. Загружаем переменные из этого конкретного файла
+load_dotenv(dotenv_path=env_path)
+
+# 3. Читаем переменные
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 APPS_SCRIPT_URL = os.getenv('APPS_SCRIPT_URL')
 ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))
 
-# Проверка — если токен не загрузился, бот не запустится
+# 4. ПРОВЕРКА: если токен не загрузился, мы сразу об этом узнаем
 if not BOT_TOKEN:
-    raise Exception("❌ BOT_TOKEN не найден! Проверь файл .env")
+    print("❌ КРИТИЧЕСКАЯ ОШИБКА: BOT_TOKEN не найден!")
+    print(f"Проверь файл: {env_path}")
+    print("Убедись, что в нём нет пробелов вокруг знака '='")
+    exit(1)  # Останавливаем программу, чтобы не было ошибки InvalidToken
+
+print("✅ Токен успешно загружен!")
 
 import re
 import requests

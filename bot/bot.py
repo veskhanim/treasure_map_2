@@ -40,48 +40,41 @@ from telegram.ext import Application, CommandHandler, MessageHandler, filters, C
 # YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 
 # ===== API HELPER =====
-def apps_script_request(path, method='GET', body=None, params=None):
-    """Запрос к Apps Script"""
-    if params is None:
-        params = {}
-    
-    url = f"{APPS_SCRIPT_URL}?path={path}"
-    if 'id' in params:
-        url += f"&id={params['id']}"
-    
-    try:
-        if method == 'GET':
-            response = requests.get(url, timeout=10)
-        else:
-            headers = {'Content-Type': 'text/plain;charset=utf-8'}
-            payload = {**(body or {}), '_method': method}
-            response = requests.post(url, headers=headers, json=payload, timeout=10)
-        
-        print(f"📡 Apps Script Response [{method} {path}]: Status={response.status_code}")
-        print(f"📄 Response text (first 500 chars): {response.text[:500]}")
-        
-        # Проверяем, что ответ не пустой
-        if not response.text.strip():
-            print(f"❌ Пустой ответ от Apps Script для {path}")
-            return {'error': 'Пустой ответ от сервера'}
-        
-        # Проверяем, что ответ начинается с { или [ (JSON)
-        if not response.text.strip().startswith(('{', '[')):
-            print(f"❌ Apps Script вернул не JSON для {path}: {response.text[:100]}")
-            return {'error': 'Сервер вернул не JSON (возможно HTML ошибка)'}
-        
-        return response.json()
-        
-    except requests.exceptions.Timeout:
-        print(f" Таймаут при запросе к Apps Script: {path}")
-        return {'error': 'Таймаут запроса'}
-    except requests.exceptions.RequestException as e:
-        print(f"❌ Ошибка сети при запросе к Apps Script: {e}")
-        return {'error': f'Ошибка сети: {str(e)}'}
-    except Exception as e:
-        print(f"❌ Неизвестная ошибка при запросе к Apps Script: {e}")
-        return {'error': f'Неизвестная ошибка: {str(e)}'}
+import requests
+from requests.exceptions import Timeout, ConnectionError
 
+def apps_script_request(path, method='GET', body=None, max_retries=3):
+    """Запрос к Apps Script с повторами"""
+    url = f"{APPS_SCRIPT_URL}?path={path}"
+    
+    for attempt in range(max_retries):
+        try:
+            if method == 'GET':
+                response = requests.get(url, timeout=15)  # ← ТАЙМАУТ 15 секунд
+            else:
+                response = requests.post(
+                    url,
+                    json={**body, '_method': method},
+                    timeout=15,
+                    headers={'Content-Type': 'text/plain'}
+                )
+            
+            if response.ok:
+                return response.json()
+            else:
+                print(f"⚠️ Apps Script error: {response.status_code}")
+                
+        except Timeout:
+            print(f"⏱ Таймаут Apps Script (попытка {attempt + 1}/{max_retries})")
+            if attempt < max_retries - 1:
+                time.sleep(2)  # Ждём 2 секунды перед повтором
+            continue
+        except ConnectionError as e:
+            print(f"🔌 Ошибка соединения: {e}")
+            break
+    
+    return None
+    
 # ===== YOUTUBE API =====
 def get_channel_videos(channel_url):
     """Получить видео с канала YouTube"""

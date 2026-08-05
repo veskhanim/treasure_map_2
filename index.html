@@ -2371,12 +2371,17 @@
         async function toggleVideoProgress(videoId) {
             const video = videos.find(v => v.id === videoId);
             if (!video) return;
-            const watchedOriginal = String(video.watchedOriginal).toLowerCase() === 'true';
-            const watchedRu = String(video.watchedRu).toLowerCase() === 'true';
-            const watchedEn = String(video.watchedEn).toLowerCase() === 'true';
+            
+            // Читаем поля С ПОДЧЁРКИВАНИЕМ (как приходят с бэкенда)
+            const watchedOriginal = video.watched_original === true  video.watched_original === 'true'  video.watchedOriginal === true;
+            const watchedRu = video.watched_ru === true  video.watched_ru === 'true'  video.watchedRu === true;
+            const watchedEn = video.watched_en === true  video.watched_en === 'true'  video.watchedEn === true;
+            
             let newOriginal = watchedOriginal;
             let newRu = watchedRu;
             let newEn = watchedEn;
+            
+            // Логика переключения
             if (watchedOriginal && watchedRu && watchedEn) {
                 newOriginal = false;
                 newRu = false;
@@ -2388,16 +2393,19 @@
             } else if (!watchedEn) {
                 newEn = true;
             }
+            
+            // Обновляем поля в объекте (оба варианта имён для совместимости)
+            video.watched_original = newOriginal;
             video.watchedOriginal = newOriginal;
+            video.watched_ru = newRu;
             video.watchedRu = newRu;
+            video.watched_en = newEn;
             video.watchedEn = newEn;
+            
             try {
-                await apiRequest('videos', 'PUT', {
-                    id: videoId,
-                    watchedOriginal: newOriginal,
-                    watchedRu: newRu,
-                    watchedEn: newEn
-                }, { id: videoId });
+                // ОТПРАВЛЯЕМ ВЕСЬ ОБЪЕКТ ВИДЕО, а не только поля прогресса
+                await apiRequest('videos', 'PUT', video, { id: videoId });
+                // Перезагружаем данные
                 await loadData();
                 if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
             } catch (error) {

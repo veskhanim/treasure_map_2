@@ -1,8 +1,18 @@
 import os
 
+from dotenv import load_dotenv
+
+# Загружаем переменные из файла .env
+load_dotenv()
+
+# Теперь читаем переменные
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 APPS_SCRIPT_URL = os.getenv('APPS_SCRIPT_URL')
 ADMIN_ID = int(os.getenv('ADMIN_ID', '0'))
+
+# Проверка — если токен не загрузился, бот не запустится
+if not BOT_TOKEN:
+    raise Exception("❌ BOT_TOKEN не найден! Проверь файл .env")
 
 import re
 import requests
@@ -12,10 +22,10 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, WebAppI
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 
 # ===== НАСТРОЙКИ =====
-BOT_TOKEN = os.getenv('BOT_TOKEN')
-WEBAPP_URL = os.getenv('WEBAPP_URL')
-APPS_SCRIPT_URL = os.getenv('APPS_SCRIPT_URL')
-YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
+# BOT_TOKEN = os.getenv('BOT_TOKEN')
+# WEBAPP_URL = os.getenv('WEBAPP_URL')
+# APPS_SCRIPT_URL = os.getenv('APPS_SCRIPT_URL')
+# YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 
 # ===== API HELPER =====
 def apps_script_request(path, method='GET', body=None, params=None):

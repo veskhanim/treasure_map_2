@@ -2511,9 +2511,9 @@
             if (!video) return;
             
             // Читаем поля С ПОДЧЁРКИВАНИЕМ (как приходят с бэкенда)
-            const watchedOriginal = video.watched_original === true  video.watched_original === 'true'  video.watchedOriginal === true;
-            const watchedRu = video.watched_ru === true  video.watched_ru === 'true'  video.watchedRu === true;
-            const watchedEn = video.watched_en === true  video.watched_en === 'true'  video.watchedEn === true;
+            const watchedOriginal = video.watched_original === true || video.watched_original === 'true' || video.watchedOriginal === true;
+            const watchedRu = video.watched_ru === true || video.watched_ru === 'true' || video.watchedRu === true;
+            const watchedEn = video.watched_en === true || video.watched_en === 'true' || video.watchedEn === true;
             
             let newOriginal = watchedOriginal;
             let newRu = watchedRu;

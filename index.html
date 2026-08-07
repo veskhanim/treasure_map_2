@@ -1580,10 +1580,20 @@
             <div class="header-top">
                 <div class="title">TREASURE <span>MAP</span></div>
             </div>
-            <div class="search-container" id="searchContainer">
-                 <!-- НОВАЯ кнопка штурвала -->
-                <button class="calendar-btn" onclick="toggleBotMenu()" style="background: rgba(255,107,0,0.2); border: 1px solid rgba(255,107,0,0.4);">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #ff6b00;">
+           <div class="search-container" id="searchContainer">
+                <div class="search-input-wrap">
+                    <svg class="icon"><use href="#i-search"/></svg>
+                    <input type="text" class="search-input" id="searchText" placeholder="Найти сокровище...">
+                </div>
+                
+                <!-- Кнопка календаря -->
+                <button class="calendar-btn" onclick="openCalendar()">
+                    <svg class="icon"><use href="#i-calendar"/></svg>
+                </button>
+                
+                <!-- Кнопка штурвала (меню функций) -->
+                <button class="calendar-btn" onclick="toggleBotMenu()" style="margin-left: 6px;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"/>
                         <circle cx="12" cy="12" r="3"/>
                         <line x1="12" y1="2" x2="12" y2="5"/>
@@ -1595,14 +1605,6 @@
                         <line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/>
                         <line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/>
                     </svg>
-                </button>
-                <div class="search-input-wrap">
-                    <svg class="icon"><use href="#i-search"/></svg>
-                    <input type="text" class="search-input" id="searchText" placeholder="Найти сокровище...">
-                </div>
-               <!-- Кнопка календаря (остаётся как была) -->
-                <button class="calendar-btn" onclick="openCalendar()" style="margin-right: 6px;">
-                    <svg class="icon"><use href="#i-calendar"/></svg>
                 </button>
                 
                 <div class="calendar-dropdown" id="calendarDropdown">
@@ -1619,7 +1621,7 @@
                     </div>
                     <button class="calendar-clear" id="calendarClear">Сбросить</button>
                 </div>
-            </div>            
+            </div>         
           
         </header>
 

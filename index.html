@@ -1926,6 +1926,30 @@
                     </div>
                 </div>
             </div>
+            <!-- Вкладка ДОБАВИТЬ -->
+            <div id="addTab" class="tab-content" style="display: none; padding: 20px;">
+                <h2 style="color: var(--white); font-size: 22px; margin-bottom: 24px; font-weight: 700;">Добавить видео</h2>
+                
+                <div style="display: flex; flex-direction: column; gap: 16px;">
+                    <!-- Кнопка: Добавить по ссылке -->
+                    <button onclick="openAddVideoModal()" style="width: 100%; padding: 20px; background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); border-radius: 12px; color: var(--white); font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s;">
+                        <span style="font-size: 26px;">🔗</span>
+                        <div style="text-align: left;">
+                            <div style="margin-bottom: 4px;">Добавить по ссылке</div>
+                            <div style="font-size: 12px; color: var(--text-dim); font-weight: 400;">Вставь ссылку на YouTube</div>
+                        </div>
+                    </button>
+                    
+                    <!-- Кнопка: Добавить из файла -->
+                    <button onclick="openAddFromFileModal()" style="width: 100%; padding: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: var(--white); font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s;">
+                        <span style="font-size: 26px;">📄</span>
+                        <div style="text-align: left;">
+                            <div style="margin-bottom: 4px;">Добавить из файла</div>
+                            <div style="font-size: 12px; color: var(--text-dim); font-weight: 400;">Загрузи список ссылок</div>
+                        </div>
+                    </button>
+                </div>
+            </div>
 
         <nav class="bottom-nav">
             <div class="dune dune-1"></div>
@@ -1961,6 +1985,13 @@
                 </div>
                 <span class="nav-label">Календарь</span>
             </div>
+            <button class="nav-item" data-tab="add">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/>
+                    <line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+                <span>ДОБАВИТЬ</span>
+            </button>
         </nav>
     </div>
 
@@ -3465,5 +3496,20 @@
             </div>
         </div>
     </div>
+    <nav class="bottom-nav">
+        <button class="nav-item active" data-tab="map">
+            <svg class="icon"><use href="#i-map"/></svg>
+            <span>КАРТА</span>
+        </button>
+        <button class="nav-item" data-tab="networks">
+            <svg class="icon"><use href="#i-networks"/></svg>
+            <span>СЕТИ</span>
+        </button>
+        <!-- ... остальные вкладки ... -->
+        <button class="nav-item" data-tab="calendar">
+            <svg class="icon"><use href="#i-calendar"/></svg>
+            <span>КАЛЕНДАРЬ</span>
+        </button>
+    </nav>
 </body>
 </html>

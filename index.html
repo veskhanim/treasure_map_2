@@ -2511,9 +2511,9 @@
             if (!video) return;
             
             // Читаем поля С ПОДЧЁРКИВАНИЕМ (как приходят с бэкенда)
-            const watchedOriginal = video.watched_original === true || video.watched_original === 'true' || video.watchedOriginal === true;
-            const watchedRu = video.watched_ru === true || video.watched_ru === 'true' || video.watchedRu === true;
-            const watchedEn = video.watched_en === true || video.watched_en === 'true' || video.watchedEn === true;
+            const watchedOriginal = video.watched_original === 'true' || video.watched_original === 'true' || video.watchedOriginal === 'true';
+            const watchedRu = video.watched_ru === 'true' || video.watched_ru === 'true' || video.watchedRu === 'true';
+            const watchedEn = video.watched_en === 'true' || video.watched_en === 'true' || video.watchedEn === 'true';
             
             let newOriginal = watchedOriginal;
             let newRu = watchedRu;
@@ -2558,9 +2558,9 @@
             const ruUrl = video.ru_url || video.ruUrl || '';
             const enUrl = video.en_url || video.enUrl || '';
             const originalLang = video.original_lang || video.originalLang || 'kr';
-            const watchedOriginal = video.watched_original === true || video.watched_original === 'true' || video.watchedOriginal === true;
-            const watchedRu = video.watched_ru === true || video.watched_ru === 'true' || video.watchedRu === true;
-            const watchedEn = video.watched_en === true || video.watched_en === 'true' || video.watchedEn === true;
+            const watchedOriginal = video.watched_original === 'true' || video.watched_original === 'true' || video.watchedOriginal === 'true';
+            const watchedRu = video.watched_ru === 'true' || video.watched_ru === 'true' || video.watchedRu === 'true';
+            const watchedEn = video.watched_en === 'true' || video.watched_en === 'true' || video.watchedEn === 'true';
             let members = video.members || [];
             if (typeof members === 'string') {
                 members = members.split(',').map(m => m.trim()).filter(m => m);

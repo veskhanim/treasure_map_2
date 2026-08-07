@@ -3259,6 +3259,25 @@
             renderPlaylistVideoList(filter);
         }
 
+        // Открыть/закрыть меню штурвала
+        function toggleBotMenu() {
+            const modal = document.getElementById('botMenuModal');
+            modal.classList.add('visible');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+        }
+        
+        function closeBotMenu() {
+            document.getElementById('botMenuModal').classList.remove('visible');
+        }
+        
+        // Заглушки для модалок (потом реализуем)
+        function openAddVideoModal() {
+            alert('Модалка добавления по ссылке будет здесь');
+        }
+        
+        function openAddFromFileModal() {
+            alert('Модалка добавления из файла будет здесь');
+        }
         async function addVideoToPlaylist(videoId) {
             if (!currentPlaylistIdForAdd) return;
             try {
@@ -3282,25 +3301,6 @@
             }
         }
 
-       // Открыть/закрыть меню штурвала
-        function toggleBotMenu() {
-            const modal = document.getElementById('botMenuModal');
-            modal.classList.add('visible');
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        }
-        
-        function closeBotMenu() {
-            document.getElementById('botMenuModal').classList.remove('visible');
-        }
-        
-        // Заглушки для модалок (потом реализуем)
-        function openAddVideoModal() {
-            alert('Модалка добавления по ссылке будет здесь');
-        }
-        
-        function openAddFromFileModal() {
-            alert('Модалка добавления из файла будет здесь');
-        }
 
         document.querySelectorAll('.calendar-mode-btn').forEach(btn => {
             btn.addEventListener('click', function() {
@@ -3471,30 +3471,28 @@
             </div>
         </div>
     </div>
-        <!-- Модальное окно меню штурвала -->
-    <div class="modal-overlay" id="botMenuModal" onclick="if(event.target === this) closeBotMenu()">
-        <div class="modal-content" style="max-width: 320px;">
-            <div class="modal-header">
-                <div class="modal-title">⚓ Функции</div>
-                <button class="modal-close" onclick="closeBotMenu()">
-                    <svg class="icon"><use href="#i-x"/></svg>
-                </button>
-            </div>
-            
-            <div style="display: flex; flex-direction: column; gap: 12px; padding: 8px 0;">
-                <!-- Кнопка: Добавить по ссылке -->
-                <button onclick="openAddVideoModal(); closeBotMenu();" style="width: 100%; padding: 16px; background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
-                    <span style="font-size: 22px;">🔗</span>
-                    <span>Добавить по ссылке</span>
-                </button>
-                
-                <!-- Кнопка: Добавить из файла -->
-                <button onclick="openAddFromFileModal(); closeBotMenu();" style="width: 100%; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
-                    <span style="font-size: 22px;">📄</span>
-                    <span>Добавить из файла</span>
-                </button>
+    <!-- Модальное окно меню штурвала -->
+        <div class="modal-overlay" id="botMenuModal" onclick="if(event.target === this) closeBotMenu()">
+            <div class="modal-content" style="max-width: 320px;">
+                <div class="modal-header">
+                    <div class="modal-title">⚓ Функции</div>
+                    <button class="modal-close" onclick="closeBotMenu()">
+                        <svg class="icon"><use href="#i-x"/></svg>
+                    </button>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 12px; padding: 8px 0;">
+                    <!-- Кнопка: Добавить по ссылке -->
+                    <button onclick="openAddVideoModal(); closeBotMenu();" style="width: 100%; padding: 16px; background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
+                        <span style="font-size: 22px;">🔗</span>
+                        <span>Добавить по ссылке</span>
+                    </button>
+                    <!-- Кнопка: Добавить из файла -->
+                    <button onclick="openAddFromFileModal(); closeBotMenu();" style="width: 100%; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
+                        <span style="font-size: 22px;">📄</span>
+                        <span>Добавить из файла</span>
+                    </button>
+                </div>
             </div>
         </div>
-    </div>
 </body>
 </html>

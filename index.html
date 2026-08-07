@@ -2055,7 +2055,7 @@
                     console.warn('️ Пользователь не найден:', userId);
                     if (authMessage) authMessage.style.display = 'none';
                     if (authError) authError.style.display = 'block';
-                    if (authUserInfo) authUserInfo.textContent = Telegram ID: ${userId} (@${username});
+                    if (authUserInfo) authUserInfo.textContent = 'Telegram ID: ${userId} (@${username})';
                 }
             } catch (error) {
                 console.error(' Ошибка проверки:', error);

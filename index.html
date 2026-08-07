@@ -1468,6 +1468,26 @@
 </head>
 <body>
     <div class="app-container">
+        <!-- Экран проверки пользователя -->
+        <div id="authScreen" style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: linear-gradient(180deg, #87CEEB 0%, #e8985b 60%, #c97a3a 100%); z-index: 99999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px;">
+            <div style="text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 20px;">🏴‍☠️</div>
+                <div style="font-family: 'Montserrat', sans-serif; font-size: 24px; font-weight: 900; color: var(--white); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 10px; text-shadow: 0 2px 8px rgba(0,0,0,0.3);">
+                    TREASURE <span style="color: var(--orange);">MAP</span>
+                </div>
+                <div id="authMessage" style="font-size: 14px; color: var(--text-dim); margin-top: 20px; line-height: 1.5;">
+                    Проверка доступа...
+                </div>
+                <div id="authError" style="display: none; margin-top: 30px;">
+                    <div style="font-size: 14px; color: var(--white); margin-bottom: 16px; line-height: 1.5;">
+                        Чтобы открыть приложение, используй кнопку меню в боте @TreasureMapBot
+                    </div>
+                    <a href="https://t.me/TreasureMapBot" target="_blank" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, var(--orange), var(--sand)); border-radius: 8px; color: var(--black); font-size: 14px; font-weight: 700; text-decoration: none;">
+                        Открыть бота
+                    </a>
+                </div>
+            </div>
+        </div>
         <svg style="display:none" xmlns="http://www.w3.org/2000/svg">
             <symbol id="i-calendar" viewBox="0 0 24 24">
                 <rect x="3" y="4" width="18" height="18" rx="2" ry="2" fill="none" stroke="currentColor" stroke-width="2"/>
@@ -1997,8 +2017,39 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.ready();
+
+        // Глобальная переменная для хранения данных пользователя
+        let currentUser = null;
+        
+        // Функция проверки авторизации
+        function checkAuth() {
+            const authScreen = document.getElementById('authScreen');
+            const authMessage = document.getElementById('authMessage');
+            const authError = document.getElementById('authError');
+            
+            // Проверяем, есть ли данные пользователя от Telegram
+            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                currentUser = tg.initDataUnsafe.user;
+                console.log('✅ Пользователь авторизован:', currentUser);
+                
+                // Скрываем экран проверки
+                authScreen.style.display = 'none';
+                
+                // Продолжаем загрузку приложения
+                tg.expand();
+                tg.ready();
+                loadData();
+            } else {
+                // Данные пользователя не получены
+                console.warn('️ Данные пользователя не получены');
+                authMessage.style.display = 'none';
+                authError.style.display = 'block';
+            }
+        }
+        
+        // Запускаем проверку сразу
+        checkAuth();
+    
 
         const API_URL = 'https://script.google.com/macros/s/AKfycbzwhOpMeJHd1G1ts4xU94-UO0Krgc_io2qqDPOsBLw_YxJcl7X8VLkZo6wSaXI3OHgc/exec';
 
@@ -3345,7 +3396,6 @@
             document.getElementById(id).addEventListener('input', applyFilters);
         });
 
-        loadData();
     </script>
 
     <!-- Модальное окно одобрения видео -->

@@ -1450,6 +1450,15 @@
             font-size: 11px;
             color: var(--text-dim);
         }
+        .bot-menu-btn:hover {
+            background: rgba(255,107,0,0.25) !important;
+            border-color: var(--orange) !important;
+            transform: translateY(-2px);
+        }
+        
+        .bot-menu-btn:active {
+            transform: translateY(0);
+        }
         @media (max-width: 360px) {
             .video-thumbnail { width: 120px; min-width: 120px; height: 68px; }
             .video-title { font-size: 11px; }
@@ -1564,8 +1573,25 @@
                     <svg class="icon"><use href="#i-search"/></svg>
                     <input type="text" class="search-input" id="searchText" placeholder="Найти сокровище...">
                 </div>
-                <button class="calendar-btn" id="calendarBtn">
+               <!-- Кнопка календаря (остаётся как была) -->
+                <button class="calendar-btn" onclick="openCalendar()" style="margin-right: 6px;">
                     <svg class="icon"><use href="#i-calendar"/></svg>
+                </button>
+                
+                <!-- НОВАЯ кнопка штурвала (меню функций) -->
+                <button class="calendar-btn" id="botMenuBtn" onclick="toggleBotMenu()">
+                    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/>
+                        <circle cx="12" cy="12" r="3"/>
+                        <line x1="12" y1="2" x2="12" y2="5"/>
+                        <line x1="12" y1="19" x2="12" y2="22"/>
+                        <line x1="2" y1="12" x2="5" y2="12"/>
+                        <line x1="19" y1="12" x2="22" y2="12"/>
+                        <line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/>
+                        <line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/>
+                        <line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/>
+                        <line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/>
+                    </svg>
                 </button>
                 <div class="calendar-dropdown" id="calendarDropdown">
                     <div class="calendar-mode-switch">
@@ -3210,6 +3236,58 @@
             }
         }
 
+        // Открыть/закрыть меню штурвала
+       // Открыть/закрыть меню бота
+        function toggleBotMenu() {
+            const modal = document.getElementById('botMenuModal');
+            if (modal.classList.contains('visible')) {
+                closeBotMenu();
+            } else {
+                modal.classList.add('visible');
+                if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
+            }
+        }
+        
+        function closeBotMenu() {
+            document.getElementById('botMenuModal').classList.remove('visible');
+        }
+        
+        // Статистика
+        async function showStats() {
+            try {
+                const result = await apiRequest('stats', 'GET');
+                
+                let statsText = '📊 Статистика:\n\n';
+                statsText += `Всего видео: ${result.total || 0}\n`;
+                statsText += `Просмотрено: ${result.watched || 0}\n`;
+                statsText += `Осталось: ${(result.total || 0) - (result.watched || 0)}\n`;
+                
+                alert(statsText);
+            } catch (error) {
+                alert('Ошибка получения статистики: ' + error.message);
+            }
+        }
+        
+        // Помощь
+        function showHelp() {
+            const helpText = `
+        📖 Помощь по Treasure Map
+        
+        ➕ Добавить видео — вставь ссылку на YouTube
+        🎲 Случайное видео — рандомайзер для выбора
+        📊 Статистика — твой прогресс просмотра
+         Календарь — события и релизы по датам
+        
+        💡 Приложение работает прямо в Telegram!
+            `;
+            alert(helpText);
+        }
+        
+        // Рандомайзер (заглушка, реализуем позже)
+        function showRandomVideo() {
+            alert(' Рандомайзер будет реализован в следующем обновлении!');
+        }
+
         document.getElementById('calendarBtn').addEventListener('click', function(e) {
             e.stopPropagation();
             document.getElementById('calendarDropdown').classList.toggle('visible');
@@ -3381,6 +3459,44 @@
                 </button>
                 <button class="modal-btn save" onclick="saveEdit()" style="flex:1;">
                     Сохранить
+                </button>
+            </div>
+        </div>
+    </div>
+        <!-- Модальное окно меню штурвала -->
+    <!-- Меню функций бота -->
+    <div class="modal-overlay" id="botMenuModal">
+        <div class="modal-content" style="max-width: 320px;">
+            <div class="modal-header">
+                <div class="modal-title">⚓ Команды</div>
+                <button class="modal-close" onclick="closeBotMenu()">
+                    <svg class="icon"><use href="#i-x"/></svg>
+                </button>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <!-- Кнопка: Добавить видео -->
+                <button class="bot-menu-btn" onclick="openAddVideoModal(); closeBotMenu();" style="width: 100%; padding: 14px; background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">➕</span>
+                    <span>Добавить видео</span>
+                </button>
+                
+                <!-- Кнопка: Рандомайзер -->
+                <button class="bot-menu-btn" onclick="showRandomVideo(); closeBotMenu();" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">🎲</span>
+                    <span>Случайное видео</span>
+                </button>
+                
+                <!-- Кнопка: Статистика -->
+                <button class="bot-menu-btn" onclick="showStats(); closeBotMenu();" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;">📊</span>
+                    <span>Статистика</span>
+                </button>
+                
+                <!-- Кнопка: Помощь -->
+                <button class="bot-menu-btn" onclick="showHelp(); closeBotMenu();" style="width: 100%; padding: 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 20px;"></span>
+                    <span>Помощь</span>
                 </button>
             </div>
         </div>

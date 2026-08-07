@@ -2017,11 +2017,9 @@
     <script>
         const tg = window.Telegram.WebApp;
 
-       // Глобальная переменная для хранения данных пользователя
+      // ===== ПРОВЕРКА АВТОРИЗАЦИИ =====
         let currentUser = null;
-        const ADMIN_ID = 6306023335; // Твой Telegram ID (замени на свой)
         
-        // Функция проверки авторизации
         async function checkAuth() {
             const authScreen = document.getElementById('authScreen');
             const authMessage = document.getElementById('authMessage');
@@ -2030,14 +2028,14 @@
             
             // Проверяем, есть ли данные пользователя от Telegram
             if (!tg.initDataUnsafe || !tg.initDataUnsafe.user) {
-                authMessage.textContent = 'Открой приложение через бота @TreasureMapBot';
-                authError.style.display = 'block';
+                if (authMessage) authMessage.textContent = 'Открой приложение через бота';
+                if (authError) authError.style.display = 'block';
                 return;
             }
             
             currentUser = tg.initDataUnsafe.user;
             const userId = currentUser.id;
-            const username = currentUser.username || 'без username';
+            const username = currentUser.username || 'без_username';
             
             console.log('👤 Пользователь:', currentUser);
             
@@ -2046,31 +2044,26 @@
                 const result = await apiRequest('check-user', 'GET', null, { user_id: userId });
                 
                 if (result && result.exists) {
-                    // Пользователь найден — пускаем в приложение
                     console.log('✅ Пользователь авторизован:', username);
-                    authScreen.style.display = 'none';
+                    if (authScreen) authScreen.style.display = 'none';
                     
                     // Продолжаем загрузку приложения
                     tg.expand();
                     tg.ready();
                     loadData();
                 } else {
-                    // Пользователь не найден
-                    console.warn('⚠️ Пользователь не найден в таблице Users:', userId);
-                    authMessage.style.display = 'none';
-                    authError.style.display = 'block';
-                    authUserInfo.textContent = Telegram ID: ${userId} (@${username});
+                    console.warn('️ Пользователь не найден:', userId);
+                    if (authMessage) authMessage.style.display = 'none';
+                    if (authError) authError.style.display = 'block';
+                    if (authUserInfo) authUserInfo.textContent = Telegram ID: ${userId} (@${username});
                 }
             } catch (error) {
-                console.error('❌ Ошибка проверки авторизации:', error);
-                authMessage.textContent = 'Ошибка подключения. Попробуй позже.';
-                authError.style.display = 'block';
-                authUserInfo.textContent = Telegram ID: ${userId} (@${username});
+                console.error(' Ошибка проверки:', error);
+                if (authMessage) authMessage.textContent = 'Ошибка подключения. Попробуй позже.';
+                if (authError) authError.style.display = 'block';
+                if (authUserInfo) authUserInfo.textContent = Telegram ID: ${userId} (@${username});
             }
         }
-        
-        // Запускаем проверку сразу (вместо loadData())
-        checkAuth();
     
 
         const API_URL = 'https://script.google.com/macros/s/AKfycbzwhOpMeJHd1G1ts4xU94-UO0Krgc_io2qqDPOsBLw_YxJcl7X8VLkZo6wSaXI3OHgc/exec';
@@ -3417,6 +3410,8 @@
         ['searchText', 'searchDate', 'dateFrom', 'dateTo'].forEach(id => {
             document.getElementById(id).addEventListener('input', applyFilters);
         });
+
+        checkAuth();
 
     </script>
 

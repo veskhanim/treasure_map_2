@@ -3354,18 +3354,21 @@
             const match = s.match(/(?:v=|\/vi\/|youtu\.be\/|\/live\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
             return match ? match[1] : null;
         }
-        
-        document.getElementById('addLinkInput').addEventListener('input', function() {
-            const videoId = extractYouTubeId(this.value);
-            const preview = document.getElementById('addLinkPreview');
-            if (videoId) {
-                document.getElementById('addLinkThumb').src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
-                document.getElementById('addLinkTitle').textContent = `ID: ${videoId}`;
-                preview.style.display = 'block';
-            } else {
-                preview.style.display = 'none';
-            }
-        });
+
+        const addLinkInput = document.getElementById('addLinkInput');
+        if (addLinkInput) {
+            document.getElementById('addLinkInput').addEventListener('input', function() {
+                const videoId = extractYouTubeId(this.value);
+                const preview = document.getElementById('addLinkPreview');
+                if (videoId) {
+                    document.getElementById('addLinkThumb').src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                    document.getElementById('addLinkTitle').textContent = `ID: ${videoId}`;
+                    preview.style.display = 'block';
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+        }
         
         async function submitAddLink() {
             const url = document.getElementById('addLinkInput').value.trim();

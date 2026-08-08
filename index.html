@@ -2068,17 +2068,25 @@
 
         const API_URL = 'https://script.google.com/macros/s/AKfycbzwhOpMeJHd1G1ts4xU94-UO0Krgc_io2qqDPOsBLw_YxJcl7X8VLkZo6wSaXI3OHgc/exec';
 
-        async function apiRequest(path, method = 'GET', body = null, params = {}) {
+       async function apiRequest(path, method = 'GET', body = null, params = {}) {
             const url = new URL(API_URL);
             url.searchParams.append('path', path);
-            if (params && params.id) {
-                url.searchParams.append('id', params.id);
+            
+            // ИСПРАВЛЕНИЕ: добавляем ВСЕ параметры из объекта params (включая user_id)
+            if (params) {
+                for (const key in params) {
+                    if (params.hasOwnProperty(key)) {
+                        url.searchParams.append(key, params[key]);
+                    }
+                }
             }
+        
             if (method === 'GET') {
                 const response = await fetch(url.toString());
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                 return await response.json();
             }
+            
             const options = {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },

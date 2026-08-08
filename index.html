@@ -1605,7 +1605,7 @@
                 </div>
                 
                 <!-- Кнопка календаря -->
-                <button class="calendar-btn" onclick="openCalendar()">
+                <button class="calendar-btn" id="calendarBtn" onclick="openCalendar()">
                     <svg class="icon"><use href="#i-calendar"/></svg>
                 </button>
                 
@@ -3524,13 +3524,15 @@
         document.addEventListener('click', function(e) {
             const calendarBtn = document.getElementById('calendarBtn');
             const calendarDropdown = document.getElementById('calendarDropdown');
-            if (!calendarBtn.contains(e.target) && !calendarDropdown.contains(e.target)) {
-                calendarDropdown.classList.remove('visible');
-                calendarBtn.classList.remove('active');
-            }
-            if (!categoryDropdown.contains(e.target)) {
-                categoryDropdown.classList.remove('open');
-                categoryMenu.classList.remove('visible');
+            if (calendarBtn && calendarDropdown ){
+                if (!calendarBtn.contains(e.target) && !calendarDropdown.contains(e.target)) {
+                    calendarDropdown.classList.remove('visible');
+                    calendarBtn.classList.remove('active');
+                }
+                if (!categoryDropdown.contains(e.target)) {
+                    categoryDropdown.classList.remove('open');
+                    categoryMenu.classList.remove('visible');
+                }
             }
         });
 

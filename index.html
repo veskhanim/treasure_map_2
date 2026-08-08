@@ -1609,22 +1609,6 @@
                     <svg class="icon"><use href="#i-calendar"/></svg>
                 </button>
                 
-                <!-- Кнопка штурвала (меню функций) -->
-                <button class="calendar-btn" onclick="toggleBotMenu()" style="margin-left: 6px;">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <circle cx="12" cy="12" r="10"/>
-                        <circle cx="12" cy="12" r="3"/>
-                        <line x1="12" y1="2" x2="12" y2="5"/>
-                        <line x1="12" y1="19" x2="12" y2="22"/>
-                        <line x1="2" y1="12" x2="5" y2="12"/>
-                        <line x1="19" y1="12" x2="22" y2="12"/>
-                        <line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/>
-                        <line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/>
-                        <line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/>
-                        <line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/>
-                    </svg>
-                </button>
-                
                 <div class="calendar-dropdown" id="calendarDropdown">
                     <div class="calendar-mode-switch">
                         <button class="calendar-mode-btn active" data-mode="single">Дата</button>
@@ -1945,29 +1929,25 @@
                 </div>
             </div>
             <!-- Вкладка ДОБАВИТЬ -->
-            <div id="addTab" class="tab-content" style="display: none; padding: 20px;">
-                <h2 style="color: var(--white); font-size: 22px; margin-bottom: 24px; font-weight: 700;">Добавить видео</h2>
-                
-                <div style="display: flex; flex-direction: column; gap: 16px;">
-                    <!-- Кнопка: Добавить по ссылке -->
-                    <button onclick="openAddVideoModal()" style="width: 100%; padding: 20px; background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); border-radius: 12px; color: var(--white); font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s;">
-                        <span style="font-size: 26px;">🔗</span>
-                        <div style="text-align: left;">
-                            <div style="margin-bottom: 4px;">Добавить по ссылке</div>
-                            <div style="font-size: 12px; color: var(--text-dim); font-weight: 400;">Вставь ссылку на YouTube</div>
-                        </div>
-                    </button>
-                    
-                    <!-- Кнопка: Добавить из файла -->
-                    <button onclick="openAddFromFileModal()" style="width: 100%; padding: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: var(--white); font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s;">
-                        <span style="font-size: 26px;">📄</span>
-                        <div style="text-align: left;">
-                            <div style="margin-bottom: 4px;">Добавить из файла</div>
-                            <div style="font-size: 12px; color: var(--text-dim); font-weight: 400;">Загрузи список ссылок</div>
-                        </div>
-                    </button>
-                </div>
+        <div id="addTab" class="tab-content" style="display: none; padding: 20px;">
+            <h2 style="color: var(--white); font-size: 22px; margin-bottom: 24px; font-weight: 700;">Добавить видео</h2>
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+                <button onclick="openAddLinkModal()" style="width: 100%; padding: 20px; background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); border-radius: 12px; color: var(--white); font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s;">
+                    <span style="font-size: 26px;">🔗</span>
+                    <div style="text-align: left;">
+                        <div style="margin-bottom: 4px;">Добавить по ссылке</div>
+                        <div style="font-size: 12px; color: var(--text-dim); font-weight: 400;">Вставь ссылку на YouTube</div>
+                    </div>
+                </button>
+                <button onclick="openAddFileModal()" style="width: 100%; padding: 20px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; color: var(--white); font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 14px; transition: all 0.2s;">
+                    <span style="font-size: 26px;">📄</span>
+                    <div style="text-align: left;">
+                        <div style="margin-bottom: 4px;">Добавить из файла</div>
+                        <div style="font-size: 12px; color: var(--text-dim); font-weight: 400;">Загрузи список ссылок</div>
+                    </div>
+                </button>
             </div>
+        </div>
 
         <nav class="bottom-nav">
             <div class="dune dune-1"></div>
@@ -2003,13 +1983,12 @@
                 </div>
                 <span class="nav-label">Журнал</span>
             </div>
-            <button class="nav-item" data-tab="add">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"/>
-                    <line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-                <span>ДОБАВИТЬ</span>
-            </button>
+            <div class="nav-item" onclick="switchTab('add', this)">
+                <div class="nav-icon-wrap">
+                    <svg class="nav-icon"><use href="#i-plus"/></svg>
+                </div>
+                <span class="nav-label">Добавить</span>
+            </div>
         </nav>
     </div>
 
@@ -2460,14 +2439,17 @@
             document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             const tabElement = document.getElementById(`tab-${tabName}`);
             if (tabElement) tabElement.classList.add('active');
+            
             document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
             if (el) el.classList.add('active');
+            
             const searchContainer = document.getElementById('searchContainer');
-            if (tabName === 'translations' || tabName === 'playlists' || tabName === 'calendar') {
+            if (tabName === 'translations' || tabName === 'playlists' || tabName === 'calendar' || tabName === 'add') {
                 if (searchContainer) searchContainer.style.display = 'none';
             } else {
                 if (searchContainer) searchContainer.style.display = 'flex';
             }
+            
             if (tabName === 'map') renderVideos();
             if (tabName === 'new-videos') renderPendingVideos();
             if (tabName === 'playlists') renderPlaylists();
@@ -3332,25 +3314,6 @@
             renderPlaylistVideoList(filter);
         }
 
-        // Открыть/закрыть меню штурвала
-        function toggleBotMenu() {
-            const modal = document.getElementById('botMenuModal');
-            modal.classList.add('visible');
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-        }
-        
-        function closeBotMenu() {
-            document.getElementById('botMenuModal').classList.remove('visible');
-        }
-        
-        // Заглушки для модалок (потом реализуем)
-        function openAddVideoModal() {
-            alert('Модалка добавления по ссылке будет здесь');
-        }
-        
-        function openAddFromFileModal() {
-            alert('Модалка добавления из файла будет здесь');
-        }
         async function addVideoToPlaylist(videoId) {
             if (!currentPlaylistIdForAdd) return;
             try {
@@ -3373,6 +3336,160 @@
                 alert('Ошибка при добавлении: ' + error.message);
             }
         }
+
+        // ===== ДОБАВЛЕНИЕ ПО ССЫЛКЕ =====
+        function openAddLinkModal() {
+            document.getElementById('addLinkInput').value = '';
+            document.getElementById('addLinkPreview').style.display = 'none';
+            document.getElementById('addLinkModal').classList.add('visible');
+        }
+        
+        function closeAddLinkModal() {
+            document.getElementById('addLinkModal').classList.remove('visible');
+        }
+        
+        function extractYouTubeId(url) {
+            const s = String(url).trim();
+            if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+            const match = s.match(/(?:v=|\/vi\/|youtu\.be\/|\/live\/|\/shorts\/)([a-zA-Z0-9_-]{11})/);
+            return match ? match[1] : null;
+        }
+        
+        document.getElementById('addLinkInput').addEventListener('input', function() {
+            const videoId = extractYouTubeId(this.value);
+            const preview = document.getElementById('addLinkPreview');
+            if (videoId) {
+                document.getElementById('addLinkThumb').src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
+                document.getElementById('addLinkTitle').textContent = `ID: ${videoId}`;
+                preview.style.display = 'block';
+            } else {
+                preview.style.display = 'none';
+            }
+        });
+        
+        async function submitAddLink() {
+            const url = document.getElementById('addLinkInput').value.trim();
+            const videoId = extractYouTubeId(url);
+            
+            if (!videoId) {
+                alert('Неверная ссылка на YouTube');
+                return;
+            }
+            
+            // Проверяем, нет ли уже такого видео
+            const exists = videos.some(v => v.id === videoId) || pendingVideos.some(v => v.id === videoId);
+            if (exists) {
+                alert('Это видео уже есть в базе');
+                return;
+            }
+            
+            const saveBtn = document.querySelector('#addLinkModal .modal-btn.save');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Добавление...';
+            saveBtn.disabled = true;
+            
+            try {
+                await apiRequest('pending-videos', 'POST', {
+                    id: videoId,
+                    title: `Video ${videoId}`,
+                    video_url: url,
+                    thumbnail_url: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+                    channel_name: 'Добавлено вручную',
+                    published_at: new Date().toISOString().split('T')[0]
+                });
+                
+                closeAddLinkModal();
+                await loadData();
+                if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+            } catch (error) {
+                alert('Ошибка при добавлении: ' + error.message);
+            } finally {
+                saveBtn.textContent = originalText;
+                saveBtn.disabled = false;
+            }
+        }
+        
+        // ===== ДОБАВЛЕНИЕ ИЗ ФАЙЛА =====
+        let fileLinks = [];
+        
+        function openAddFileModal() {
+            document.getElementById('addFileInput').value = '';
+            document.getElementById('addFilePreview').style.display = 'none';
+            fileLinks = [];
+            document.getElementById('addFileModal').classList.add('visible');
+        }
+        
+        function closeAddFileModal() {
+            document.getElementById('addFileModal').classList.remove('visible');
+            fileLinks = [];
+        }
+        
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const lines = text.split(/\r?\n/).map(l => l.trim()).filter(l => l);
+                
+                fileLinks = lines
+                    .map(line => extractYouTubeId(line))
+                    .filter(id => id !== null);
+                
+                // Убираем дубликаты и уже существующие
+                fileLinks = [...new Set(fileLinks)].filter(id => 
+                    !videos.some(v => v.id === id) && !pendingVideos.some(v => v.id === id)
+                );
+                
+                document.getElementById('addFileCount').textContent = fileLinks.length;
+                
+                const list = document.getElementById('addFileList');
+                list.innerHTML = fileLinks.map(id => `
+                    <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.05);">
+                                <img src="https://img.youtube.com/vi/${id}/default.jpg" style="width:40px;height:23px;border-radius:3px;">
+                            <span>${id}</span>
+                        </div>
+                    `).join('');
+                    
+                    document.getElementById('addFilePreview').style.display = 'block';
+                };
+                reader.readAsText(file);
+            }
+            
+            async function submitAddFile() {
+                if (fileLinks.length === 0) {
+                    alert('Нет ссылок для добавления');
+                    return;
+                }
+                
+                const saveBtn = document.querySelector('#addFileModal .modal-btn.save');
+                const originalText = saveBtn.textContent;
+                saveBtn.textContent = Добавление ${fileLinks.length}...;
+                saveBtn.disabled = true;
+                
+                try {
+                    const videosToAdd = fileLinks.map(id => ({
+                        id: id,
+                        title: `Video ${id}`,
+                        video_url: `https://youtube.com/watch?v=${id}`,
+                        thumbnail_url: `https://img.youtube.com/vi/${id}/hqdefault.jpg`,
+                        channel_name: 'Добавлено из файла',
+                        published_at: new Date().toISOString().split('T')[0]
+                    }));
+                    
+                    await apiRequest('batch-pending-videos', 'POST', { videos: videosToAdd });
+                    
+                    closeAddFileModal();
+                    await loadData();
+                    if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+                } catch (error) {
+                    alert('Ошибка при добавлении: ' + error.message);
+                } finally {
+                    saveBtn.textContent = originalText;
+                    saveBtn.disabled = false;
+                }
+            }
 
 
         document.querySelectorAll('.calendar-mode-btn').forEach(btn => {
@@ -3545,28 +3662,58 @@
             </div>
         </div>
     </div>
-    <!-- Модальное окно меню штурвала -->
-        <div class="modal-overlay" id="botMenuModal" onclick="if(event.target === this) closeBotMenu()">
-            <div class="modal-content" style="max-width: 320px;">
-                <div class="modal-header">
-                    <div class="modal-title">⚓ Функции</div>
-                    <button class="modal-close" onclick="closeBotMenu()">
-                        <svg class="icon"><use href="#i-x"/></svg>
-                    </button>
-                </div>
-                <div style="display: flex; flex-direction: column; gap: 12px; padding: 8px 0;">
-                    <!-- Кнопка: Добавить по ссылке -->
-                    <button onclick="openAddVideoModal(); closeBotMenu();" style="width: 100%; padding: 16px; background: rgba(255,107,0,0.15); border: 1px solid rgba(255,107,0,0.3); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
-                        <span style="font-size: 22px;">🔗</span>
-                        <span>Добавить по ссылке</span>
-                    </button>
-                    <!-- Кнопка: Добавить из файла -->
-                    <button onclick="openAddFromFileModal(); closeBotMenu();" style="width: 100%; padding: 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; color: var(--white); font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all 0.2s;">
-                        <span style="font-size: 22px;">📄</span>
-                        <span>Добавить из файла</span>
-                    </button>
-                </div>
+        <!-- Модальное окно добавления по ссылке -->
+<div class="modal-overlay" id="addLinkModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">🔗 Добавить по ссылке</div>
+            <button class="modal-close" onclick="closeAddLinkModal()">
+                <svg class="icon"><use href="#i-x"/></svg>
+            </button>
+        </div>
+        <div class="modal-field">
+            <div class="modal-label">Ссылка на YouTube видео</div>
+            <input type="text" class="modal-input" id="addLinkInput" placeholder="https://youtube.com/watch?v=...">
+        </div>
+        <div id="addLinkPreview" style="display:none;margin-bottom:16px;">
+            <img id="addLinkThumb" style="width:100%;border-radius:8px;margin-bottom:8px;">
+            <div id="addLinkTitle" style="font-size:13px;color:var(--text-dim);"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeAddLinkModal()">Отмена</button>
+            <button class="modal-btn save" onclick="submitAddLink()">Добавить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно добавления из файла -->
+<div class="modal-overlay" id="addFileModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-title">📄 Добавить из файла</div>
+            <button class="modal-close" onclick="closeAddFileModal()">
+                <svg class="icon"><use href="#i-x"/></svg>
+            </button>
+        </div>
+        <div class="modal-field">
+            <div class="modal-label">Выбери файл со ссылками (txt, csv)</div>
+            <input type="file" class="modal-input" id="addFileInput" accept=".txt,.csv" onchange="handleFileSelect(event)">
+            <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+                Каждая ссылка на новой строке
             </div>
         </div>
+        <div id="addFilePreview" style="display:none;margin-bottom:16px;">
+            <div style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">
+                Найдено ссылок: <span id="addFileCount" style="color:var(--orange);font-weight:700;">0</span>
+            </div>
+            <div id="addFileList" style="max-height:200px;overflow-y:auto;font-size:11px;color:var(--text-muted);"></div>
+        </div>
+        <div class="modal-actions">
+            <button class="modal-btn cancel" onclick="closeAddFileModal()">Отмена</button>
+            <button class="modal-btn save" onclick="submitAddFile()">Добавить все</button>
+        </div>
+    </div>
+</div>
+    
 </body>
 </html>
